@@ -35,5 +35,6 @@ test-suite animonad-test
     main-is:          Main.hs
     build-depends:
         base ^>=4.17.2.1,
+        lens ^>=5.3.2,
         HUnit ^>=1.6,
         animonad

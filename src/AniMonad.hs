@@ -1,4 +1,4 @@
-module AniMonad (frames, unframes) where
+module AniMonad (frames, unframes, lerp, sigLens, Signal) where
 
 import Control.Lens
 
@@ -24,14 +24,14 @@ chain :: Signal a -> Signal a -> Signal a
 chain (Signal a_fn a_dur) (Signal b_fn b_dur) = Signal (\t -> if t < a_dur then a_fn t else b_fn t) (a_dur + b_dur)
 
 -- Fields
-animateField :: a -> Lens' a b -> Signal b -> Signal a
-animateField initial field = fmap (\x -> set field x initial)
+-- animateField :: a -> Lens' a b -> Signal b -> Signal a
+-- animateField initial field = fmap (\x -> set field x initial)
 
-extractField :: Signal a -> Lens' a b -> Signal b
-extractField anim field = view field <$> anim
-
-animateField' :: Signal a -> Lens' a b -> Signal b -> Signal a
-animateField' sig field field_sig = set field <$> field_sig <*> sig
+sigLens :: Lens' a b -> Lens' (Signal a) (Signal b)
+sigLens field = lens v o
+  where
+    v sig = view field <$> sig
+    o sig sub_sig = set field <$> sub_sig <*> sig
 
 -- Frame
 fps :: Time
@@ -50,13 +50,13 @@ unframes l = Signal f (fromIntegral (length l) * frame)
 
 -- Lerp
 class Lerpable a where
-  lerp :: a -> a -> Time -> a
+  lerp :: a -> a -> Signal a
 
 instance Lerpable Float where
-  lerp a b t = (1 - t) * a + (t * b)
+  lerp a b = Signal (\t -> (1 - t) * a + (t * b)) 1
 
 instance Lerpable Int where
-  lerp a b = round . lerp (fromIntegral a :: Float) (fromIntegral b :: Float)
+  lerp a b = round <$> lerp (fromIntegral a :: Float) (fromIntegral b :: Float)
 
 -- Keys
 data Key a where
