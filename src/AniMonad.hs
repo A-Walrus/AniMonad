@@ -24,8 +24,8 @@ chain :: Signal a -> Signal a -> Signal a
 chain (Signal a_fn a_dur) (Signal b_fn b_dur) = Signal (\t -> if t < a_dur then a_fn t else b_fn t) (a_dur + b_dur)
 
 -- Fields
--- animateField :: a -> Lens' a b -> Signal b -> Signal a
--- animateField initial field = fmap (\x -> set field x initial)
+animateField :: a -> Lens' a b -> Signal b -> Signal a
+animateField initial field signal = set (sigLens field) signal (pure initial)
 
 sigLens :: Lens' a b -> Lens' (Signal a) (Signal b)
 sigLens field = lens v o
@@ -44,23 +44,26 @@ frames :: Signal a -> [a]
 frames (Signal f dur) = map f [0, frame .. (dur - frame)]
 
 unframes :: [a] -> Signal a
-unframes l = Signal f (fromIntegral (length l) * frame)
+unframes = unframes' frame
+
+unframes' :: Time -> [a] -> Signal a
+unframes' step l = Signal f (fromIntegral (length l) * step)
   where
-    f t = l !! min (floor (t / frame)) (length l - 1)
+    f t = l !! min (floor (t / step)) (length l - 1)
 
 -- Lerp
-class Lerpable a where
+class Lerp a where
   lerp :: a -> a -> Signal a
 
-instance Lerpable Float where
+instance Lerp Float where
   lerp a b = Signal (\t -> (1 - t) * a + (t * b)) 1
 
-instance Lerpable Int where
+instance Lerp Int where
   lerp a b = round <$> lerp (fromIntegral a :: Float) (fromIntegral b :: Float)
 
 -- Keys
 data Key a where
-  Key :: (Lerpable b) => Lens' a b -> b -> Time -> Key a
+  Key :: (Lerp b) => Lens' a b -> b -> Time -> Key a
 
 class Keys k a where
   list :: k -> [Key a]
