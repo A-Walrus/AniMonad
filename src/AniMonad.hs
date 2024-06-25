@@ -14,7 +14,11 @@ instance Functor Signal where
 
 instance Applicative Signal where
   pure a = Signal (const a) 0
-  (Signal f_fn f_dur) <*> (Signal v_fn v_dur) = Signal (\t -> f_fn t $ v_fn t) (max f_dur v_dur)
+  f@(Signal _ f_dur) <*> v@(Signal _ v_dur) = Signal (\t -> f_fn t $ v_fn t) dur
+    where
+      dur = max f_dur v_dur
+      Signal f_fn _ = extend dur f
+      Signal v_fn _ = extend dur v
 
 end :: Signal a -> a
 end (Signal fn dur) = fn dur
@@ -23,7 +27,7 @@ start :: Signal a -> a
 start (Signal fn _) = fn 0
 
 extend :: Time -> Signal a -> Signal a
-extend time (Signal f d) = Signal (\t -> if t < d then f time else f d) (max time d)
+extend time (Signal f d) = Signal (\t -> if t < d then f t else f d) (max time d)
 
 stretch :: Float -> Signal a -> Signal a
 stretch fac (Signal f d) = Signal (f . (/ fac)) (d * fac)
@@ -32,7 +36,7 @@ stretchTo :: Float -> Signal a -> Signal a
 stretchTo time (Signal f d) = Signal (f . (/ time) . (* d)) time
 
 instance Semigroup (Signal a) where
-  (Signal a_fn a_dur) <> (Signal b_fn b_dur) = Signal (\t -> if t < a_dur then a_fn t else b_fn t) (a_dur + b_dur)
+  (Signal a_fn a_dur) <> (Signal b_fn b_dur) = Signal (\t -> if t < a_dur then a_fn t else b_fn (t - a_dur)) (a_dur + b_dur)
 
 instance Monoid (Signal a) where
   mempty = pure undefined
