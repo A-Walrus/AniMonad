@@ -1,4 +1,6 @@
-module AniMonad (frames, unframes, lerp, sigLens, Signal) where
+{-# LANGUAGE FunctionalDependencies #-}
+
+module AniMonad (frames, unframes, lerp, sigLens, extend, stretch, stretchTo, end, start, Signal, (|~), (~>), Key (Key) ) where
 
 import Control.Lens
 
@@ -20,8 +22,20 @@ end (Signal fn dur) = fn dur
 start :: Signal a -> a
 start (Signal fn _) = fn 0
 
-chain :: Signal a -> Signal a -> Signal a
-chain (Signal a_fn a_dur) (Signal b_fn b_dur) = Signal (\t -> if t < a_dur then a_fn t else b_fn t) (a_dur + b_dur)
+extend :: Time -> Signal a -> Signal a
+extend time (Signal f d) = Signal (\t -> if t < d then f time else f d) (max time d)
+
+stretch :: Float -> Signal a -> Signal a
+stretch fac (Signal f d) = Signal (f . (/ fac)) (d * fac)
+
+stretchTo :: Float -> Signal a -> Signal a
+stretchTo time (Signal f d) = Signal (f . (/ time) . (* d)) time
+
+instance Semigroup (Signal a) where
+  (Signal a_fn a_dur) <> (Signal b_fn b_dur) = Signal (\t -> if t < a_dur then a_fn t else b_fn t) (a_dur + b_dur)
+
+instance Monoid (Signal a) where
+  mempty = pure undefined
 
 -- Fields
 animateField :: a -> Lens' a b -> Signal b -> Signal a
@@ -65,7 +79,7 @@ instance Lerp Int where
 data Key a where
   Key :: (Lerp b) => Lens' a b -> b -> Time -> Key a
 
-class Keys k a where
+class Keys k a | k -> a where
   list :: k -> [Key a]
 
 instance Keys [Key a] a where
@@ -73,3 +87,14 @@ instance Keys [Key a] a where
 
 instance Keys (Key a) a where
   list key = [key]
+
+(|~) :: (Keys k a) => a -> k -> Signal a
+initial |~ k = foldr thing (pure initial) keys
+  where
+    keys = list k
+    thing (Key field val time) = set (sigLens field) (stretch time $ lerp (initial ^. field) val)
+
+(~>) :: (Keys k a) => Signal a -> k -> Signal a
+signal ~> k = signal <> (end signal |~ keys)
+  where
+    keys = list k
