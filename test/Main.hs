@@ -39,7 +39,7 @@ keys :: Test
 keys = frames (view (sigLens height) scene) ~=? frames (lerp 1 10 <> lerp 10 1)
   where
     scene :: Signal Rect
-    scene = Rect 1 1 1 |~ Key height 10 1 ~> [Key width 1 1, Key height 1 1, Key num 37 1] 
+    scene = Rect 1 1 1 |~ Key height 10 1 ~> All [Key width 1, Key height 1, Key num 37] 1
 
 tests :: Test
 tests = test [frameTest, subSig, timings, keys]

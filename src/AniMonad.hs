@@ -1,6 +1,6 @@
 {-# LANGUAGE FunctionalDependencies #-}
 
-module AniMonad (frames, unframes, lerp, sigLens, extend, stretch, stretchTo, end, start, Signal, (|~), (~>), Key (Key) ) where
+module AniMonad (frames, unframes, lerp, sigLens, extend, stretch, stretchTo, end, start, Signal, (|~), (~>), Key (Key), All (All)) where
 
 import Control.Lens
 
@@ -84,6 +84,11 @@ class Keys k a | k -> a where
 
 instance Keys [Key a] a where
   list = id
+
+data All a = All [Time -> Key a] Time
+
+instance Keys (All a) a where
+  list (All keys time) = map ($ time) keys
 
 instance Keys (Key a) a where
   list key = [key]
