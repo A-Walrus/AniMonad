@@ -1,10 +1,11 @@
 {-# LANGUAGE FunctionalDependencies #-}
 {-# LANGUAGE MonoLocalBinds #-}
+{-# LANGUAGE TemplateHaskell #-}
 
 module AniMonad (frames, unframes, lerp, sigLens, extend, stretch, stretchTo, end, start, Signal, (|~), (~>), Key (Key, Key'), All (All), Ease) where
 
-import Control.Lens
 import Ease
+import Control.Lens hiding (children)
 
 type Time = Float
 
@@ -114,3 +115,23 @@ initial |~ k = foldr thing (pure initial) keys
 signal ~> k = signal <> (end signal |~ keys)
   where
     keys = list k
+
+-- Objects
+data Svg = Svg -- TODO
+
+class Element a where
+  draw :: a -> Svg
+
+data Rect = Rect {_width, _height :: Float} deriving (Show)
+
+$(makeLenses ''Rect)
+
+instance Element Rect where
+  draw = const Svg
+
+newtype Circle = Circle {_radius :: Float} deriving (Show)
+
+$(makeLenses ''Circle)
+
+instance Element Circle where
+  draw = const Svg
