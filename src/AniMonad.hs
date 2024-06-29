@@ -1,7 +1,7 @@
 {-# LANGUAGE FunctionalDependencies #-}
 {-# LANGUAGE MonoLocalBinds #-}
 
-module AniMonad (frames, unframes, lerp, sigLens, extend, stretch, stretchTo, end, start, Signal, (|~), (~>), Key (Key), All (All), Ease) where
+module AniMonad (frames, unframes, lerp, sigLens, extend, stretch, stretchTo, end, start, Signal, (|~), (~>), Key (Key, Key'), All (All), Ease) where
 
 import Control.Lens
 import Ease
@@ -87,7 +87,7 @@ instance Lerp Int where
 -- Keys
 data Key a where
   Key :: (Lerp b) => Lens' a b -> b -> Time -> Key a
-  Key' :: (Lerp b) => Lens' a b -> b -> Time -> Ease Float -> Key a
+  Key' :: (Lerp b) => Lens' a b -> b -> Ease Float -> Time -> Key a
 
 class Keys k a | k -> a where
   list :: k -> [Key a]
@@ -107,8 +107,8 @@ instance Keys (Key a) a where
 initial |~ k = foldr thing (pure initial) keys
   where
     keys = list k
-    thing (Key field val time) = thing (Key' field val time cubicInOut)
-    thing (Key' field val time easing) = set (sigLens field) (stretch time $ ease easing $ lerp (initial ^. field) val)
+    thing (Key field val time) = thing (Key' field val cubicInOut time)
+    thing (Key' field val easing time) = set (sigLens field) (stretch time $ ease easing $ lerp (initial ^. field) val)
 
 (~>) :: (Keys k a) => Signal a -> k -> Signal a
 signal ~> k = signal <> (end signal |~ keys)
