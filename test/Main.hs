@@ -36,7 +36,7 @@ data Rect = Rect {_width, _height :: Float, _num :: Int}
 $(makeLenses ''Rect)
 
 keys :: Test
-keys = frames (view (sigLens height) scene) ~=? frames (lerp 1 10 <> lerp 10 1)
+keys = test [frames (view (sigLens height) scene) ~=? frames (1 |~ Key id 10 1 ~> Key id 1 1)]
   where
     scene :: Signal Rect
     scene = Rect 1 1 1 |~ Key height 10 1 ~> All [Key width 1, Key height 1, Key num 37] 1
