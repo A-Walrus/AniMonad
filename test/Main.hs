@@ -31,15 +31,15 @@ timings =
   where
     l = lerp 0 1 :: Signal Float
 
-data Rect = Rect {_width, _height :: Float, _num :: Int}
+data Rectish = Rectish {_w, _h :: Float, _num :: Int}
 
-$(makeLenses ''Rect)
+$(makeLenses ''Rectish)
 
 keys :: Test
-keys = test [frames (view (sigLens height) scene) ~=? frames (1 |~ Key id 10 1 ~> Key id 1 1)]
+keys = test [frames (view (sigLens h) scene) ~=? frames (1 |~ Key id 10 1 ~> Key id 1 1)]
   where
-    scene :: Signal Rect
-    scene = Rect 1 1 1 |~ Key height 10 1 ~> All [Key width 1, Key height 1, Key num 37] 1
+    scene :: Signal Rectish
+    scene = Rectish 1 1 1 |~ Key h 10 1 ~> All [Key w 1, Key h 1, Key num 37] 1
 
 tests :: Test
 tests = test [frameTest, subSig, timings, keys]
