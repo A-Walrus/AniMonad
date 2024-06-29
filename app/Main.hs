@@ -7,7 +7,7 @@ import System.Process
 main :: IO ()
 main = writeItemsToFiles f
   where
-    animation = Rect 100 100 |~ Key width 1024 1 ~> Key height 1024 1 ~> [Key width 100 1, Key height 100 1]
+    animation = Rect 100 100 |~ Key width 1024 1 ~> Key height 1024 1 ~> All [Key width 100, Key height 100] 1
     svgAnim = svg . draw <$> animation
     f = frames svgAnim
 
