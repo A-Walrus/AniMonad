@@ -28,7 +28,8 @@ executable animonad
         base ^>=4.17.2.1,
         animonad,
         directory,
-        process
+        process,
+        filepath
     hs-source-dirs:   app
     default-language: GHC2021
 

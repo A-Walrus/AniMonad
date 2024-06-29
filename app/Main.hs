@@ -2,6 +2,7 @@ module Main where
 
 import AniMonad
 import System.Directory
+import System.FilePath (replaceExtension)
 import System.Process
 
 main :: IO ()
@@ -11,12 +12,19 @@ main = writeItemsToFiles f
     svgAnim = svg . draw <$> animation
     f = frames svgAnim
 
+convertSvgToPng :: FilePath -> IO ()
+convertSvgToPng svgFile = do
+  let pngFile = replaceExtension svgFile "png"
+  callProcess "rsvg-convert" ["-o", pngFile, svgFile]
+
 writeItemsToFiles :: (Show a) => [a] -> IO ()
 writeItemsToFiles items = do
-  createDirectoryIfMissing True "frames"
-  mapM_ writeItemToFile (zip [0 :: Int ..] items)
-  callProcess "magick" (words "mogrify -format png frames/*.svg")
-  callProcess "ffmpeg" (words "-framerate 30 -i frames/%d.png -c:v libx264 -pix_fmt yuv420p output.mp4")
+  removeDirectoryRecursive "frames"
+  createDirectory "frames"
+  mapM_ writeItemToFile (zip fileNames items)
+  mapM_ convertSvgToPng fileNames
+  callProcess "ffmpeg" ["-y", "-framerate", show fps, "-i", "frames/%d.png", "-c:v", "libx264", "-pix_fmt", "yuv420p", "output.mp4"]
   where
-    writeItemToFile (i, item) = writeFile (frameFile i) (show item)
+    fileNames = take (length items) $ map frameFile [0 :: Int ..]
+    writeItemToFile (file, item) = writeFile file (show item)
     frameFile n = "frames/" ++ show n ++ ".svg"
