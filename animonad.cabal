@@ -15,7 +15,9 @@ library
     build-depends:    
         base ^>=4.17.2.1,
         lens ^>=5.3.2,
-        ease ^>=0.1.0
+        ease ^>=0.1.0,
+        lucid-svg ^>= 0.7.2.0,
+        text ^>= 2.1.1,
     hs-source-dirs:   src
     default-language: GHC2021
 
@@ -24,7 +26,9 @@ executable animonad
     main-is:          Main.hs
     build-depends:
         base ^>=4.17.2.1,
-        animonad
+        animonad,
+        directory,
+        process
     hs-source-dirs:   app
     default-language: GHC2021
 

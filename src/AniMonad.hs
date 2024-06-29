@@ -1,11 +1,14 @@
 {-# LANGUAGE FunctionalDependencies #-}
 {-# LANGUAGE MonoLocalBinds #-}
+{-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE TemplateHaskell #-}
 
-module AniMonad (frames, unframes, lerp, sigLens, extend, stretch, stretchTo, end, start, Signal, (|~), (~>), Key (Key, Key'), All (All), Ease) where
+module AniMonad (frames, unframes, lerp, sigLens, extend, stretch, stretchTo, end, start, Signal, (|~), (~>), Key (Key, Key'), All (All), Ease, svg, Rect (Rect), Circle (Circle), draw, width, height, radius) where
 
-import Ease
 import Control.Lens hiding (children)
+import Data.Text (Text, pack)
+import Ease
+import Lucid.Svg
 
 type Time = Float
 
@@ -117,21 +120,27 @@ signal ~> k = signal <> (end signal |~ keys)
     keys = list k
 
 -- Objects
-data Svg = Svg -- TODO
-
 class Element a where
-  draw :: a -> Svg
+  draw :: a -> Svg ()
 
 data Rect = Rect {_width, _height :: Float} deriving (Show)
 
 $(makeLenses ''Rect)
 
+showT :: (Show a) => a -> Text
+showT = pack . show
+
 instance Element Rect where
-  draw = const Svg
+  draw (Rect _width _height) = rect_ [width_ (showT _width), height_ (showT _height), fill_ "red"]
 
 newtype Circle = Circle {_radius :: Float} deriving (Show)
 
 $(makeLenses ''Circle)
 
 instance Element Circle where
-  draw = const Svg
+  draw (Circle _radius) = circle_ [r_ (showT _radius), fill_ "green"]
+
+svg :: Svg () -> Svg ()
+svg content = do
+  doctype_
+  with (svg11_ content) [version_ "1.1", width_ "1024", height_ "1024"]
