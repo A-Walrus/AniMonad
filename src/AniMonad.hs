@@ -181,7 +181,15 @@ data SomeElement where
 
 data Layout = Layout Axis [SomeElement]
 
+docWidth, docHeight :: Int
+docWidth = 1024
+docHeight = 1024
+
 svgDoc :: Svg () -> Svg ()
 svgDoc content = do
   doctype_
-  with (svg11_ content) [version_ "1.1", width_ "1024", height_ "1024", viewBox_ "-512 -512 1024 1024"]
+  with (svg11_ content) [version_ "1.1", width_ w, height_ h, viewBox_ $ nw2 <> " " <> nh2 <> " " <> w <> " " <> h]
+  where
+    h = showT docHeight
+    w = showT docWidth
+    (nh2, nw2) = (showT (-(docHeight `div` 2)), showT (-(docWidth `div` 2)))
