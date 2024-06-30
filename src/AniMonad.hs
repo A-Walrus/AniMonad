@@ -3,7 +3,8 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE TemplateHaskell #-}
 
-module AniMonad (fps, frames, unframes, lerp, sigLens, extend, stretch, stretchTo, end, start, Signal, (|~), (~>), Key (Key, Key'), All (All), Ease, svgDoc, Rect (Rect), Circle (Circle), draw, width, height, radius, module Control.Lens, Layout (Layout), SomeElement (SomeElement), Transformed (Transformed), module Linear,inner) where
+module AniMonad (fps, frames, unframes, lerp, sigLens, extend, stretch, stretchTo, end, start, Signal, (|~), (~>), Key (Key, Key'), All (All), Ease, svgDoc, Rect (Rect), Circle (Circle), draw, width, height, radius, module Control.Lens, Layout (Layout), SomeElement (SomeElement), Transformed (Transformed), module Linear, inner) where
+
 import Control.Lens hiding (children, element, transform)
 import Data.List (intercalate)
 import Data.Text (Text, pack)
@@ -124,10 +125,7 @@ signal ~> k = signal <> (end signal |~ keys)
 
 type Vec2 = V2 Float
 
-newtype BoundingBox = BoundingBox Vec2
-
-boundingBox :: Float -> Float -> BoundingBox
-boundingBox a b = BoundingBox $ V2 a b
+data BoundingBox = BoundingBox Vec2 Vec2
 
 class Element a where
   draw :: a -> Svg ()
@@ -143,18 +141,23 @@ showT :: (Show a) => a -> Text
 showT = pack . show
 
 instance Element Rect where
-  draw (Rect w h) = rect_ [width_ (showT w), height_ (showT h), fill_ "red"]
-  box (Rect w h) = boundingBox w h
+  draw (Rect w h) = rect_ [x_ (showT (-w2)), y_ (showT (-h2)), width_ (showT w), height_ (showT h), fill_ "red"]
+    where
+      (w2, h2) = (w / 2, h / 2)
+
+  box (Rect w h) = BoundingBox (V2 (-w2) (-h2)) (V2 w2 h2)
+    where
+      (w2, h2) = (w / 2, h / 2)
 
 newtype Circle = Circle {_radius :: Float} deriving (Show)
 
 $(makeLenses ''Circle)
 
 instance Element Circle where
-  draw (Circle r) = circle_ [cx_ rad, cy_ rad, r_ rad, fill_ "dodgerblue"]
+  draw (Circle r) = circle_ [r_ rad, fill_ "dodgerblue"]
     where
       rad = showT r
-  box (Circle r) = boundingBox (r * 2) (r * 2)
+  box (Circle r) = BoundingBox (V2 (-r) (-r)) (V2 r r)
 
 type Transform = M33 Float
 
@@ -163,10 +166,13 @@ data Transformed a = (Element a) => Transformed Transform a
 inner :: Lens' (Transformed a) a
 inner = lens (\(Transformed _ a) -> a) (\(Transformed t _) a -> Transformed t a)
 
+transform :: Lens' (Transformed a) Transform
+transform = lens (\(Transformed t _) -> t) (\(Transformed _ a) t -> Transformed t a)
+
 instance Element (Transformed a) where
-  draw (Transformed transform element) = g_ [transform_ transformT] (draw element)
+  draw (Transformed txform element) = g_ [transform_ transformT] (draw element)
     where
-      V3 (V3 a c e) (V3 b d f) _ = transform
+      V3 (V3 a c e) (V3 b d f) _ = txform
       transformT = pack $ "matrix(" ++ intercalate "," (map show [a, b, c, d, e, f]) ++ ")"
   box = undefined
 
@@ -178,4 +184,4 @@ data Layout = Layout Axis [SomeElement]
 svgDoc :: Svg () -> Svg ()
 svgDoc content = do
   doctype_
-  with (svg11_ content) [version_ "1.1", width_ "1024", height_ "1024"]
+  with (svg11_ content) [version_ "1.1", width_ "1024", height_ "1024", viewBox_ "-512 -512 1024 1024"]

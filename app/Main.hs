@@ -8,10 +8,11 @@ import System.Process
 main :: IO ()
 main = writeItemsToFiles f
   where
-    animation = (Rect 100 100,Transformed (V3 (V3 1 0 100) (V3 0 1 30) (V3 0 0 1)) (Circle 0))
+    animation = (Rect 100 100,Transformed (V3 (V3 1 0 0) (V3 0 1 0) (V3 0 0 1)) (Circle 0))
         |~ Key (_1 . width) 1024 1
         ~> Key (_1 . height) 1024 1
         ~> Key (_2 . inner . radius) 500 1
+        ~> Key (_2 . inner . radius) 0 1
         ~> All [Key (_1 . width) 100, Key (_1 . height) 100] 1
 
     svgAnim = svgDoc . uncurry (<>) . bimap draw draw <$> animation
