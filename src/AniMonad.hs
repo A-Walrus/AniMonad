@@ -3,9 +3,12 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE TemplateHaskell #-}
 
-module AniMonad (fps, frames, unframes, lerp, sigLens, extend, stretch, stretchTo, end, start, Signal, (|~), (~>), Key (Key, Key'), All (All), Ease, svgDoc, Rect (Rect), Circle (Circle), draw, width, height, radius, module Control.Lens, Layout (Layout), SomeElement (SomeElement), Transformed (Transformed), module Linear, inner) where
+module AniMonad (fps, frames, unframes, lerp, sigLens, extend, stretch, stretchTo, end, start, Signal, (|~), (~>), Key (Key, Key'), All (All), Ease, svgDoc, Rect (Rect), Circle (Circle), draw, width, height, radius, module Control.Lens, Layout (Layout), SomeElement (SomeElement), Transformed (Transformed), module Linear, inner, module Data.Colour.Names,module Data.Colour.SRGB, color) where
 
 import Control.Lens hiding (children, element, transform)
+import Data.Colour
+import Data.Colour.Names
+import Data.Colour.SRGB
 import Data.List (intercalate)
 import Data.Text (Text, pack)
 import Ease
@@ -83,12 +86,17 @@ unframes' step l = Signal f (fromIntegral (length l) * step)
 -- Lerp
 class Lerp a where
   lerp :: a -> a -> Signal a
+  lerp' :: a -> a -> Time -> a
+  lerp a b = Signal (lerp' a b) 1
 
 instance Lerp Float where
-  lerp a b = Signal (\t -> (1 - t) * a + (t * b)) 1
+  lerp' a b t = (1 - t) * a + (t * b)
 
 instance Lerp Int where
-  lerp a b = round <$> lerp (fromIntegral a :: Float) (fromIntegral b :: Float)
+  lerp' a b = round . lerp' (fromIntegral a :: Float) (fromIntegral b :: Float)
+
+instance Lerp Color where
+  lerp' a b t = blend t b a
 
 -- Keys
 data Key a where
@@ -125,6 +133,11 @@ signal ~> k = signal <> (end signal |~ keys)
 
 type Vec2 = V2 Float
 
+type Color = Colour Float
+
+showColor :: Color -> Text
+showColor = pack . sRGB24show
+
 data BoundingBox = BoundingBox Vec2 Vec2
 
 class Element a where
@@ -133,31 +146,33 @@ class Element a where
 
 data Axis = Horizontal | Vertical
 
-data Rect = Rect {_width, _height :: Float} deriving (Show)
+data Rect = Rect {_width, _height :: Float, _rectColor :: Color} deriving (Show)
 
 $(makeLenses ''Rect)
+$(makeFields ''Rect)
 
 showT :: (Show a) => a -> Text
 showT = pack . show
 
 instance Element Rect where
-  draw (Rect w h) = rect_ [x_ (showT (-w2)), y_ (showT (-h2)), width_ (showT w), height_ (showT h), fill_ "red"]
+  draw (Rect w h c) = rect_ [x_ (showT (-w2)), y_ (showT (-h2)), width_ (showT w), height_ (showT h), fill_ (showColor c)]
     where
       (w2, h2) = (w / 2, h / 2)
 
-  box (Rect w h) = BoundingBox (V2 (-w2) (-h2)) (V2 w2 h2)
+  box (Rect w h _) = BoundingBox (V2 (-w2) (-h2)) (V2 w2 h2)
     where
       (w2, h2) = (w / 2, h / 2)
 
-newtype Circle = Circle {_radius :: Float} deriving (Show)
+data Circle = Circle {_radius :: Float, _circleColor :: Color} deriving (Show)
 
 $(makeLenses ''Circle)
+$(makeFields ''Circle)
 
 instance Element Circle where
-  draw (Circle r) = circle_ [r_ rad, fill_ "dodgerblue"]
+  draw (Circle r c) = circle_ [r_ rad, fill_ (showColor c)]
     where
       rad = showT r
-  box (Circle r) = BoundingBox (V2 (-r) (-r)) (V2 r r)
+  box (Circle r _) = BoundingBox (V2 (-r) (-r)) (V2 r r)
 
 type Transform = M33 Float
 
