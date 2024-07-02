@@ -1,3 +1,5 @@
+{-# OPTIONS_GHC -Wno-name-shadowing #-}
+
 module Main where
 
 import AniMonad
@@ -9,13 +11,16 @@ main :: IO ()
 main = writeItemsToFiles f
   where
     animation =
-      (Rect 100 100 (sRGB24read "#20aaf5"), Circle 0 blue, [Transformed (translation (V2 x 0)) (Rect 20 20 white) | x <- [0.0, 40 .. 100]])
-        |~ Key (_1 . width) 1024 1
-        ~> Key (_1 . height) 1024 1
-        ~> Key (_2 . radius) 500 1
-        ~> All [Key (_2 . radius) 0, Key (_2 . color) black] 1
-        ~> All [Key (_1 . width) 100, Key (_1 . height) 100, Key (_1 . color) white] 1
-
+      foldr
+        ($)
+        ( pure
+            [at (V2 (x * 40) 0) (Rect 20 20 white) | x <- [-5 .. 5]]
+        )
+        [ set
+            (sigLens (ix i . transform . translation . y))
+            (0 |~ Key id 0 (fromIntegral i * 0.075) ~> Key id (-50) 0.3 ~> Key id 0 0.3)
+          | i <- [0 .. 10]
+        ]
     svgAnim = svgDoc . draw <$> animation
     f = frames svgAnim
 

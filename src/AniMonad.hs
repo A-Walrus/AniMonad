@@ -2,19 +2,23 @@
 {-# LANGUAGE MonoLocalBinds #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE TemplateHaskell #-}
+{-# OPTIONS_GHC -Wno-name-shadowing #-}
+{-# OPTIONS_GHC -Wno-unrecognised-pragmas #-}
 {-# OPTIONS_GHC -Wno-unused-top-binds #-}
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 
-module AniMonad (fps, frames, unframes, lerp, sigLens, extend, stretch, stretchTo, end, start, Signal, (|~), (~>), Key (Key, Key'), All (All), Ease, svgDoc, Rect (Rect), Circle (Circle), draw, width, height, radius, module Control.Lens, SomeElement (SomeElement), Transformed (Transformed), module Linear, inner, module Data.Colour.Names, module Data.Colour.SRGB, color, translation) where
+module AniMonad (fps, frames, unframes, lerp, sigLens, extend, stretch, stretchTo, end, start, Signal, (|~), (~>), Key (Key, Key'), All (All), Ease, svgDoc, Rect (Rect), Circle (Circle), draw, width, height, radius, module Control.Lens, SomeElement (SomeElement), Transformed (Transformed), module Linear, inner, module Data.Colour.Names, module Data.Colour.SRGB, color, at, translation, transform, x, y) where
 
-import Control.Lens hiding (children, element, transform)
-import Data.Colour
+import Control.Lens hiding (at, children, element, transform)
+import Data.Colour hiding (over)
 import Data.Colour.Names
 import Data.Colour.SRGB
 import Data.List (intercalate)
+import Data.Maybe (fromJust)
 import Data.Text (Text, pack)
 import Ease
-import Linear hiding (lerp, translation)
+import Linear (M33, V2 (V2), V3 (V3), identity)
+import Linear qualified
 import Lucid.Svg
 import TH
 
@@ -59,14 +63,13 @@ instance Monoid (Signal a) where
   mempty = pure undefined
 
 -- Fields
-animateField :: a -> Lens' a b -> Signal b -> Signal a
+animateField :: a -> Traversal' a b -> Signal b -> Signal a
 animateField initial field signal = set (sigLens field) signal (pure initial)
 
-sigLens :: Lens' a b -> Lens' (Signal a) (Signal b)
-sigLens field = lens v o
+sigLens :: Traversal' a b -> Traversal' (Signal a) (Signal b)
+sigLens field = traversal fn
   where
-    v sig = view field <$> sig
-    o sig sub_sig = set field <$> sub_sig <*> sig
+    fn bfb sa = fmap (\b -> set field <$> b <*> sa) $ bfb $ fromJust . preview field <$> sa
 
 -- Frame
 fps :: Time
@@ -101,10 +104,13 @@ instance Lerp Int where
 instance Lerp Color where
   lerp' a b t = blend t b a
 
+instance Lerp Vec2 where
+  lerp' a b t = Linear.lerp t a b
+
 -- Keys
 data Key a where
-  Key :: (Lerp b) => Lens' a b -> b -> Time -> Key a
-  Key' :: (Lerp b) => Lens' a b -> b -> Ease Float -> Time -> Key a
+  Key :: (Lerp b) => Traversal' a b -> b -> Time -> Key a
+  Key' :: (Lerp b) => Traversal' a b -> b -> Ease Float -> Time -> Key a
 
 class Keys k a | k -> a where
   list :: k -> [Key a]
@@ -125,7 +131,8 @@ initial |~ k = foldr thing (pure initial) keys
   where
     keys = list k
     thing (Key field val time) = thing (Key' field val cubicInOut time)
-    thing (Key' field val easing time) = set (sigLens field) (stretch time $ ease easing $ lerp (initial ^. field) val)
+    thing (Key' _ _ _ 0) = id
+    thing (Key' field val easing time) = over (sigLens field) (\oldSig -> (stretch time . ease easing . lerp (start oldSig)) val)
 
 (~>) :: (Keys k a) => Signal a -> k -> Signal a
 signal ~> k = signal <> (end signal |~ keys)
@@ -180,8 +187,20 @@ inner = lens (\(Transformed _ a) -> a) (\(Transformed t _) a -> Transformed t a)
 transform :: Lens' (Transformed a) Transform
 transform = lens (\(Transformed t _) -> t) (\(Transformed _ a) t -> Transformed t a)
 
-translation :: Vec2 -> Transform
-translation (V2 x y)= V3 (V3 1 0 x) (V3 0 1 y) (V3 0 1 0)
+x :: Lens' (V2 a) a
+x = lens (\(V2 x _) -> x) (\(V2 _ y) x -> V2 x y)
+
+y :: Lens' (V2 a) a
+y = lens (\(V2 _ y) -> y) (\(V2 x _) y -> V2 x y)
+
+at :: (Element a) => Vec2 -> a -> Transformed a
+at (V2 x y) = Transformed (V3 (V3 1 0 x) (V3 0 1 y) (V3 0 1 0))
+
+translation :: Lens' Transform Vec2
+translation = lens v s
+  where
+    v (V3 (V3 _ _ x) (V3 _ _ y) _) = V2 x y
+    s (V3 (V3 a b _) (V3 d e _) (V3 h i g)) (V2 x y) = V3 (V3 a b x) (V3 d e y) (V3 h i g)
 
 instance Element (Transformed a) where
   draw (Transformed txform element) = g_ [transform_ transformT] (draw element)
