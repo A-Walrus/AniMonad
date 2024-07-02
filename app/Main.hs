@@ -16,7 +16,7 @@ main = writeItemsToFiles f
         ~> All [Key (_2 . radius) 0, Key (_2 . color) black] 1
         ~> All [Key (_1 . width) 100, Key (_1 . height) 100, Key (_1 . color) white] 1
 
-    svgAnim = svgDoc . uncurry (<>) . bimap draw draw <$> animation
+    svgAnim = svgDoc . draw <$> animation
     f = frames svgAnim
 
 convertSvgToPng :: FilePath -> IO ()

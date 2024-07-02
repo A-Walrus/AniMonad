@@ -12,6 +12,7 @@ common warnings
 library
     import:           warnings
     exposed-modules:  AniMonad
+    other-modules:    TH
     build-depends:    
         base ^>=4.17.2.1,
         lens ^>=5.3.2,
@@ -19,6 +20,7 @@ library
         lucid-svg ^>= 0.7.2.0,
         text ^>= 2.1.1,
         colour >= 2.3.6,
+        template-haskell,
         linear
     hs-source-dirs:   src
     default-language: GHC2021

@@ -3,7 +3,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE TemplateHaskell #-}
 
-module AniMonad (fps, frames, unframes, lerp, sigLens, extend, stretch, stretchTo, end, start, Signal, (|~), (~>), Key (Key, Key'), All (All), Ease, svgDoc, Rect (Rect), Circle (Circle), draw, width, height, radius, module Control.Lens, Layout (Layout), SomeElement (SomeElement), Transformed (Transformed), module Linear, inner, module Data.Colour.Names,module Data.Colour.SRGB, color) where
+module AniMonad (fps, frames, unframes, lerp, sigLens, extend, stretch, stretchTo, end, start, Signal, (|~), (~>), Key (Key, Key'), All (All), Ease, svgDoc, Rect (Rect), Circle (Circle), draw, width, height, radius, module Control.Lens, Layout (Layout), SomeElement (SomeElement), Transformed (Transformed), module Linear, inner, module Data.Colour.Names, module Data.Colour.SRGB, color) where
 
 import Control.Lens hiding (children, element, transform)
 import Data.Colour
@@ -14,6 +14,8 @@ import Data.Text (Text, pack)
 import Ease
 import Linear hiding (lerp)
 import Lucid.Svg
+
+import TH
 
 type Time = Float
 
@@ -130,19 +132,10 @@ signal ~> k = signal <> (end signal |~ keys)
     keys = list k
 
 -- Objects
-
-type Vec2 = V2 Float
-
 type Color = Colour Float
 
 showColor :: Color -> Text
 showColor = pack . sRGB24show
-
-data BoundingBox = BoundingBox Vec2 Vec2
-
-class Element a where
-  draw :: a -> Svg ()
-  box :: a -> BoundingBox
 
 data Axis = Horizontal | Vertical
 
@@ -189,7 +182,9 @@ instance Element (Transformed a) where
     where
       V3 (V3 a c e) (V3 b d f) _ = txform
       transformT = pack $ "matrix(" ++ intercalate "," (map show [a, b, c, d, e, f]) ++ ")"
-  box = undefined
+  box = undefined -- TODO
+
+$(genElementInstances 8)
 
 data SomeElement where
   SomeElement :: (Element a) => a -> SomeElement
