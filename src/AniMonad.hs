@@ -1,9 +1,12 @@
+{-# OPTIONS_GHC -fno-warn-orphans #-}
+{-# OPTIONS_GHC -Wno-unused-top-binds #-}
+
 {-# LANGUAGE FunctionalDependencies #-}
 {-# LANGUAGE MonoLocalBinds #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE TemplateHaskell #-}
 
-module AniMonad (fps, frames, unframes, lerp, sigLens, extend, stretch, stretchTo, end, start, Signal, (|~), (~>), Key (Key, Key'), All (All), Ease, svgDoc, Rect (Rect), Circle (Circle), draw, width, height, radius, module Control.Lens, Layout (Layout), SomeElement (SomeElement), Transformed (Transformed), module Linear, inner, module Data.Colour.Names, module Data.Colour.SRGB, color) where
+module AniMonad (fps, frames, unframes, lerp, sigLens, extend, stretch, stretchTo, end, start, Signal, (|~), (~>), Key (Key, Key'), All (All), Ease, svgDoc, Rect (Rect), Circle (Circle), draw, width, height, radius, module Control.Lens, SomeElement (SomeElement), Transformed (Transformed), module Linear, inner, module Data.Colour.Names, module Data.Colour.SRGB, color) where
 
 import Control.Lens hiding (children, element, transform)
 import Data.Colour
@@ -137,8 +140,6 @@ type Color = Colour Float
 showColor :: Color -> Text
 showColor = pack . sRGB24show
 
-data Axis = Horizontal | Vertical
-
 data Rect = Rect {_width, _height :: Float, _rectColor :: Color} deriving (Show)
 
 $(makeLenses ''Rect)
@@ -188,8 +189,6 @@ $(genElementInstances 8)
 
 data SomeElement where
   SomeElement :: (Element a) => a -> SomeElement
-
-data Layout = Layout Axis [SomeElement]
 
 docWidth, docHeight :: Int
 docWidth = 1024
