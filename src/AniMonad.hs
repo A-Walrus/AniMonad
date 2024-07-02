@@ -1,12 +1,11 @@
-{-# OPTIONS_GHC -fno-warn-orphans #-}
-{-# OPTIONS_GHC -Wno-unused-top-binds #-}
-
 {-# LANGUAGE FunctionalDependencies #-}
 {-# LANGUAGE MonoLocalBinds #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE TemplateHaskell #-}
+{-# OPTIONS_GHC -Wno-unused-top-binds #-}
+{-# OPTIONS_GHC -fno-warn-orphans #-}
 
-module AniMonad (fps, frames, unframes, lerp, sigLens, extend, stretch, stretchTo, end, start, Signal, (|~), (~>), Key (Key, Key'), All (All), Ease, svgDoc, Rect (Rect), Circle (Circle), draw, width, height, radius, module Control.Lens, SomeElement (SomeElement), Transformed (Transformed), module Linear, inner, module Data.Colour.Names, module Data.Colour.SRGB, color) where
+module AniMonad (fps, frames, unframes, lerp, sigLens, extend, stretch, stretchTo, end, start, Signal, (|~), (~>), Key (Key, Key'), All (All), Ease, svgDoc, Rect (Rect), Circle (Circle), draw, width, height, radius, module Control.Lens, SomeElement (SomeElement), Transformed (Transformed), module Linear, inner, module Data.Colour.Names, module Data.Colour.SRGB, color, translation) where
 
 import Control.Lens hiding (children, element, transform)
 import Data.Colour
@@ -15,9 +14,8 @@ import Data.Colour.SRGB
 import Data.List (intercalate)
 import Data.Text (Text, pack)
 import Ease
-import Linear hiding (lerp)
+import Linear hiding (lerp, translation)
 import Lucid.Svg
-
 import TH
 
 type Time = Float
@@ -168,6 +166,10 @@ instance Element Circle where
       rad = showT r
   box (Circle r _) = BoundingBox (V2 (-r) (-r)) (V2 r r)
 
+instance (Element a) => Element [a] where
+  draw = foldr ((<>) . draw) mempty
+  box = foldr1 combine . map box
+
 type Transform = M33 Float
 
 data Transformed a = (Element a) => Transformed Transform a
@@ -177,6 +179,9 @@ inner = lens (\(Transformed _ a) -> a) (\(Transformed t _) a -> Transformed t a)
 
 transform :: Lens' (Transformed a) Transform
 transform = lens (\(Transformed t _) -> t) (\(Transformed _ a) t -> Transformed t a)
+
+translation :: Vec2 -> Transform
+translation (V2 x y)= V3 (V3 1 0 x) (V3 0 1 y) (V3 0 1 0)
 
 instance Element (Transformed a) where
   draw (Transformed txform element) = g_ [transform_ transformT] (draw element)

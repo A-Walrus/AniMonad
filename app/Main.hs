@@ -9,7 +9,7 @@ main :: IO ()
 main = writeItemsToFiles f
   where
     animation =
-      (Rect 100 100 (sRGB24read "#20aaf5"), Circle 0 blue)
+      (Rect 100 100 (sRGB24read "#20aaf5"), Circle 0 blue, [Transformed (translation (V2 x 0)) (Rect 20 20 white) | x <- [0.0, 40 .. 100]])
         |~ Key (_1 . width) 1024 1
         ~> Key (_1 . height) 1024 1
         ~> Key (_2 . radius) 500 1
