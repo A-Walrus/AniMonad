@@ -68,12 +68,12 @@ animateField initial field signal = set (sigLens field) signal (pure initial)
 sigLens :: Traversal' a b -> Traversal' (Signal a) (Signal b)
 sigLens field = traversal fn
   where
-    fn bfb (sa :: Signal a) = (\fsbs -> (\sbs -> (\bs a -> a & partsOf field .~ bs) <$> sbs <*> sa) <$> fsbs) $ sequenceA <$> traverse bfb (thing $ toListOf field <$> sa)
+    fn bfb (sa :: Signal a) = ((\sbs -> (\a bs -> a & partsOf field .~ bs) <$> sa <*> sbs) <$>) $ sequenceA <$> traverse bfb (decompose $ toListOf field <$> sa)
 
-thing :: Signal [b] -> [Signal b]
-thing sigBs = [(!! i) <$> sigBs | i <- [0 .. len]]
-  where
-    len = length (start sigBs)
+    decompose :: Signal [b] -> [Signal b]
+    decompose sigBs = [(!! i) <$> sigBs | i <- [0 .. len]]
+      where
+        len = length (start sigBs) -- HACK this assumes that the number of elements remains constant
 
 -- Frame
 fps :: Time
