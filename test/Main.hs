@@ -15,13 +15,12 @@ frameTest = initial ~=? (frames . unframes) initial
     initial = [1, 3, 5, 2] :: [Int]
 
 subSig :: Test
-subSig = same anim (view sig_lens x)
+subSig = same anim (view sig_lens (set sig_lens anim p))
   where
     p :: Signal (Float, Float) = pure (0, 0)
     anim = lerp 0 1
     sig_lens :: Traversal' (Signal (Float, Float)) (Signal Float)
     sig_lens = sigLens _1
-    x = set sig_lens anim p
 
 timings :: Test
 timings =
@@ -49,11 +48,17 @@ indexSignal = same (view (sigLens (ix 0)) scene) (1 |~ Key id 5 1)
     scene :: Signal [Float]
     scene = [1, 2, 3] |~ Key (ix 0) 5 1
 
+manySignal :: Test
+manySignal = test [same (view (sigLens (ix 0)) scene) (1 |~ Key id 2 1), same (view (sigLens (ix 1)) scene) (1 |~ Key id 3 1)]
+  where
+    scene :: Signal [Float]
+    scene = pure [1, 1, 1] & partsOf (sigLens traverse) .~ [(1 :: Float) |~ Key id i 1 | i <- [2 ..]]
+
 instant :: Test
 instant = same ((0 :: Float) |~ Key id 1 1) (0 |~ Key id 0 0 ~> Key id 1 1)
 
 tests :: Test
-tests = test [frameTest, subSig, timings, keys, indexSignal, instant]
+tests = test [frameTest, subSig, timings, keys, indexSignal, instant, manySignal]
 
 main :: IO ()
 main = do

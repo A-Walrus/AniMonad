@@ -71,7 +71,7 @@ sigLens field = traversal fn
     fn bfb (sa :: Signal a) = ((\sbs -> (\a bs -> a & partsOf field .~ bs) <$> sa <*> sbs) <$>) $ sequenceA <$> traverse bfb (decompose $ toListOf field <$> sa)
 
     decompose :: Signal [b] -> [Signal b]
-    decompose sigBs = [(!! i) <$> sigBs | i <- [0 .. len]]
+    decompose sigBs = [(!! i) <$> sigBs | i <- [0 .. (len - 1)]]
       where
         len = length (start sigBs) -- HACK this assumes that the number of elements remains constant
 
