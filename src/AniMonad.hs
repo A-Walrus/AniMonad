@@ -7,14 +7,13 @@
 {-# OPTIONS_GHC -Wno-unused-top-binds #-}
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 
-module AniMonad (fps, frames, unframes, lerp, sigLens, extend, stretch, stretchTo, end, start, Signal, (|~), (~>), Key (Key, Key'), All (All), Ease, svgDoc, Rect (Rect), Circle (Circle), draw, width, height, radius, module Control.Lens, SomeElement (SomeElement), Transformed (Transformed), module Linear, inner, module Data.Colour.Names, module Data.Colour.SRGB, color, at, translation, transform, x, y) where
+module AniMonad (fps, frames, unframes, lerp, sigLens, extend, stretch, stretchTo, end, start, Signal (Signal), (|~), (~>), Key (Key, Key'), All (All), Ease, svgDoc, Rect (Rect), Circle (Circle), draw, width, height, radius, module Control.Lens, SomeElement (SomeElement), Transformed (Transformed), module Linear, inner, module Data.Colour.Names, module Data.Colour.SRGB, color, at, translation, transform, x, y) where
 
 import Control.Lens hiding (at, children, element, transform)
 import Data.Colour hiding (over)
 import Data.Colour.Names
 import Data.Colour.SRGB
 import Data.List (intercalate)
-import Data.Maybe (fromJust)
 import Data.Text (Text, pack)
 import Ease
 import Linear (M33, V2 (V2), V3 (V3), identity)
@@ -69,7 +68,12 @@ animateField initial field signal = set (sigLens field) signal (pure initial)
 sigLens :: Traversal' a b -> Traversal' (Signal a) (Signal b)
 sigLens field = traversal fn
   where
-    fn bfb sa = fmap (\b -> set field <$> b <*> sa) $ bfb $ fromJust . preview field <$> sa
+    fn bfb (sa :: Signal a) = (\fsbs -> (\sbs -> (\bs a -> a & partsOf field .~ bs) <$> sbs <*> sa) <$> fsbs) $ sequenceA <$> traverse bfb (thing $ toListOf field <$> sa)
+
+thing :: Signal [b] -> [Signal b]
+thing sigBs = [(!! i) <$> sigBs | i <- [0 .. len]]
+  where
+    len = length (start sigBs)
 
 -- Frame
 fps :: Time

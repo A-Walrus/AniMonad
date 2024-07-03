@@ -10,17 +10,23 @@ import System.Process
 main :: IO ()
 main = writeItemsToFiles f
   where
+    base = [at (V2 (x * 40) 0) (Rect 20 20 white) | x <- [-5 .. 5]]
+    -- thing = base & partsOf (traverse . transform . translation . y) .~ [10,20,30,40]
     animation =
-      foldr
-        ($)
-        ( pure
-            [at (V2 (x * 40) 0) (Rect 20 20 white) | x <- [-5 .. 5]]
-        )
-        [ set
-            (sigLens (ix i . transform . translation . y))
-            (0 |~ Key id 0 (fromIntegral i * 0.075) ~> Key id (-50) 0.3 ~> Key id 0 0.3)
-          | i <- [0 .. 10]
+      (pure base :: Signal [Transformed Rect])
+        & partsOf (sigLens (traverse . transform . translation . y))
+        .~ [ 0 |~ Key id 0 (fromIntegral i * 0.075) ~> Key id (-50) 0.3 ~> Key id 0 0.3
+             | i <- [(0 :: Integer) .. 10]
         ]
+    -- animation =
+    --   foldr
+    --     ($)
+    --     (pure base)
+    --     [ set
+    --         (sigLens (ix i . transform . translation . y))
+    --         (0 |~ Key id 0 (fromIntegral i * 0.075) ~> Key id (-50) 0.3 ~> Key id 0 0.3)
+    --       | i <- [0 .. 10]
+    --     ]
     svgAnim = svgDoc . draw <$> animation
     f = frames svgAnim
 
