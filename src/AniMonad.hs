@@ -3,11 +3,10 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE TemplateHaskell #-}
 {-# OPTIONS_GHC -Wno-name-shadowing #-}
-{-# OPTIONS_GHC -Wno-unrecognised-pragmas #-}
 {-# OPTIONS_GHC -Wno-unused-top-binds #-}
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 
-module AniMonad (fps, frames, unframes, lerp, sigLens, extend, stretch, stretchTo, end, start, Signal (Signal), (|~), (~>), Key (Key, Key'), All (All), Ease, svgDoc, Rect (Rect), Circle (Circle), draw, width, height, radius, module Control.Lens, SomeElement (SomeElement), Transformed (Transformed), module Linear, inner, module Data.Colour.Names, module Data.Colour.SRGB, color, at, translation, transform, x, y) where
+module AniMonad (fps, frames, unframes, lerp, sigLens, extend, stretch, stretchTo, end, start, Signal (Signal), (|~), (~>), Key (Key, Key'), Delay (Delay), All (All), Ease, svgDoc, Rect (Rect), Circle (Circle), draw, width, height, radius, module Control.Lens, SomeElement (SomeElement), Transformed (Transformed), module Linear, inner, module Data.Colour.Names, module Data.Colour.SRGB, color, at, translation, transform, x, y) where
 
 import Control.Lens hiding (at, children, element, transform)
 import Data.Colour hiding (over)
@@ -116,32 +115,43 @@ data Key a where
   Key :: (Lerp b) => Traversal' a b -> b -> Time -> Key a
   Key' :: (Lerp b) => Traversal' a b -> b -> Ease Float -> Time -> Key a
 
-class Keys k a | k -> a where
-  list :: k -> [Key a]
+newtype Delay a where
+  Delay :: Time -> Delay a
 
-instance Keys [Key a] a where
-  list = id
+data KeysData a = KeyList [Key a] | KeysDelay (Delay a)
+
+class Keyish k a where
+  list :: k a -> KeysData a
+
+newtype Keys a = Keys [Key a]
+
+instance Keyish Keys a where
+  list (Keys l) = KeyList l
+
+instance Keyish Delay a where
+  list = KeysDelay
 
 data All a = All [Time -> Key a] Time
 
-instance Keys (All a) a where
-  list (All keys time) = map ($ time) keys
+instance Keyish All a where
+  list (All keys time) = KeyList $ map ($ time) keys
 
-instance Keys (Key a) a where
-  list key = [key]
+instance Keyish Key a where
+  list key = KeyList [key]
 
-(|~) :: (Keys k a) => a -> k -> Signal a
-initial |~ k = foldr thing (pure initial) keys
+(|~) :: (Keyish k a) => a -> k a -> Signal a
+initial |~ k = case list k of
+  (KeyList keys) -> inner initial keys
+  (KeysDelay (Delay t)) -> Signal (const initial) t
   where
-    keys = list k
-    thing (Key field val time) = thing (Key' field val cubicInOut time)
-    thing (Key' _ _ _ 0) = id
-    thing (Key' field val easing time) = over (sigLens field) (\oldSig -> (stretch time . ease easing . lerp (start oldSig)) val)
+    inner initial = foldr thing (pure initial)
+      where
+        thing (Key field val time) = thing (Key' field val cubicInOut time)
+        thing (Key' _ _ _ 0) = id
+        thing (Key' field val easing time) = over (sigLens field) (\oldSig -> (stretch time . ease easing . lerp (start oldSig)) val)
 
-(~>) :: (Keys k a) => Signal a -> k -> Signal a
-signal ~> k = signal <> (end signal |~ keys)
-  where
-    keys = list k
+(~>) :: (Keyish k a) => Signal a -> k a -> Signal a
+signal ~> k = signal <> (end signal |~ k)
 
 -- Objects
 type Color = Colour Float

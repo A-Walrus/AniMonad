@@ -14,7 +14,7 @@ main = writeItemsToFiles f
     animation =
       pure base
         & partsOf (sigLens (traverse . transform . translation . y))
-        .~ [ 0 |~ Key id 0 (i * 0.075) ~> Key id (-50) 0.3 ~> Key id 0 0.3
+        .~ [ 0 |~ Delay (i * 0.075) ~> Key id (-50) 0.3 ~> Key id 0 0.3
              | i <- [0 .. 10]
            ]
     svgAnim = svgDoc . draw <$> animation
