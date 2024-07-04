@@ -6,6 +6,8 @@ import AniMonad
 import System.Directory
 import System.FilePath (replaceExtension)
 import System.Process
+import Control.Monad (forM_)
+import System.FilePath.Posix ((</>))
 
 main :: IO ()
 main = writeItemsToFiles f
@@ -29,6 +31,7 @@ convertSvgToPng svgFile = do
 writeItemsToFiles :: (Show a) => [a] -> IO ()
 writeItemsToFiles items = do
   createDirectoryIfMissing True "frames"
+  deleteAllFilesInDirectory "frames"
   mapM_ writeItemToFile (zip fileNames items)
   mapM_ convertSvgToPng fileNames
   callProcess "ffmpeg" ["-y", "-framerate", show fps, "-i", "frames/%d.png", "-c:v", "libx264", "-pix_fmt", "yuv420p", "output.mp4"]
@@ -36,3 +39,20 @@ writeItemsToFiles items = do
     fileNames = take (length items) $ map frameFile [0 :: Int ..]
     writeItemToFile (file, item) = writeFile file (show item)
     frameFile n = "frames/" ++ show n ++ ".svg"
+
+-- Function to delete all files in a directory
+deleteAllFilesInDirectory :: FilePath -> IO ()
+deleteAllFilesInDirectory dir = do
+  -- Check if the directory exists
+  exists <- doesDirectoryExist dir
+  if exists
+    then do
+      -- Get all files in the directory
+      contents <- getDirectoryContents dir
+      let files = filter (`notElem` [".", ".."]) contents
+      -- Delete each file
+      forM_ files $ \file -> do
+        let filePath = dir </> file
+        removeFile filePath
+    else
+      putStrLn $ "Directory does not exist: " ++ dir
