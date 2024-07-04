@@ -25,13 +25,13 @@ module AniMonad
     Signal (Signal),
     (|~),
     (~>),
-    Delay (Delay),
+    delay,
     simul,
     key,
     key',
     ky,
     ky',
-    MapEnd (MapEnd),
+    mapEnd,
     sig,
     sigs,
     Ease,
@@ -162,16 +162,16 @@ instance Lerp Vec2 where
 class Chainable k a where
   chain :: a -> k a -> Signal a
 
-newtype Delay a where
-  Delay :: Time -> Delay a
+newtype Chain a = Chain (a -> Signal a)
 
-instance Chainable Delay a where
-  chain val (Delay t) = Signal (const val) t
+instance Chainable Chain a where
+  chain val (Chain fn) = fn val
 
-newtype MapEnd a = MapEnd (a -> a)
+delay :: Time -> Chain a
+delay t = Chain (\val -> Signal (const val) t)
 
-instance Chainable MapEnd a where
-  chain val (MapEnd f) = pure (f val)
+mapEnd :: (a -> a) -> Chain a
+mapEnd fn = Chain (pure . fn)
 
 data Key a where
   Key' :: (Lerp b) => (Traversal' a b) -> b -> (Ease Float) -> Time -> Key a

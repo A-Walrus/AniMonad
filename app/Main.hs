@@ -20,11 +20,11 @@ main = writeItemsToFiles f
         ~> key (adjoin (ix 4) (ix 7) . y) 40 1
         ~> simul [key (ix 4 . x) (get (ix 7 . x) base), key (ix 7 . x) (get (ix 4 . x) base)] 1
         ~> key (adjoin (ix 4) (ix 7) . y) 0 1
-        ~> MapEnd (sortOn (view x))
+        ~> mapEnd (sortOn (view x))
         ~> key (adjoin (ix 4) (ix 7) . color) white 0.5
         ~> sigs
           (traverse . y)
-          [ 0 |~ Delay (i * 0.075) ~> ky (-50) 0.3 ~> ky 0 0.3
+          [ 0 |~ delay (i * 0.075) ~> ky (-50) 0.3 ~> ky 0 0.3
             | i <- [0 .. 10]
           ]
     svgAnim = svgDoc . draw <$> anim

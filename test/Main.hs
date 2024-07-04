@@ -22,10 +22,10 @@ subSig = same anim (get sig_lens (set sig_lens anim p))
     sig_lens :: Traversal' (Signal (Float, Float)) (Signal Float)
     sig_lens = sigLens _1
 
-mapEnd :: Test
-mapEnd = end anim ~?= 7
+testMapEnd :: Test
+testMapEnd = end anim ~?= 7
   where
-    anim = (0 :: Float) |~ ky 1.0 1 ~> MapEnd (const 7)
+    anim = (0 :: Float) |~ ky 1.0 1 ~> mapEnd (const 7)
 
 timings :: Test
 timings =
@@ -63,7 +63,7 @@ instant :: Test
 instant = same ((0 :: Float) |~ ky 1 1) (0 |~ ky 0 0 ~> ky 1 1)
 
 tests :: Test
-tests = test [frameTest, subSig, timings, keys, indexSignal, instant, manySignal, mapEnd]
+tests = test [frameTest, subSig, timings, keys, indexSignal, instant, manySignal, testMapEnd]
 
 main :: IO ()
 main = do
