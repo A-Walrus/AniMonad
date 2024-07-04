@@ -7,19 +7,72 @@
 {-# OPTIONS_GHC -Wno-unused-top-binds #-}
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 
-module AniMonad (fps, frames, unframes, lerp, sigLens, extend, stretch, stretchTo, end, start, Signal (Signal), (|~), (~>), Key (Key, Key'), Delay (Delay), All (All), Ease, svgDoc, Rect (Rect), Circle (Circle), draw, width, height, radius, module Control.Lens, SomeElement (SomeElement), Transformed (Transformed), module Linear, inner, module Data.Colour.Names, module Data.Colour.SRGB, color, at, translation, transform, x, y) where
+module AniMonad
+  ( module Control.Lens,
+    module Linear,
+    module Data.Colour.Names,
+    module Data.Colour.SRGB,
+    fps,
+    frames,
+    unframes,
+    lerp,
+    sigLens,
+    extend,
+    stretch,
+    stretchTo,
+    end,
+    start,
+    Signal (Signal),
+    (|~),
+    (~>),
+    Delay (Delay),
+    simul,
+    key,
+    key',
+    ky,
+    ky',
+    MapEnd (MapEnd),
+    sig,
+    sigs,
+    Ease,
+    svgDoc,
+    Rect (Rect),
+    Circle (Circle),
+    draw,
+    width,
+    height,
+    radius,
+    inner,
+    color,
+    SomeElement (SomeElement),
+    Transformed (Transformed),
+    at,
+    translation,
+    transform,
+    x,
+    y,
+    adjoin,
+    get,
+  )
+where
 
 import Control.Lens hiding (at, children, element, transform)
+import Control.Lens.Unsound (adjoin)
 import Data.Colour hiding (over)
 import Data.Colour.Names
 import Data.Colour.SRGB
 import Data.List (intercalate)
+import Data.Maybe (fromJust)
+import Data.Monoid qualified
 import Data.Text (Text, pack)
 import Ease
 import Linear (M33, V2 (V2), V3 (V3), identity)
 import Linear qualified
 import Lucid.Svg
 import TH
+
+get :: Getting (Data.Monoid.First a) s a -> s -> a
+get a b = fromJust (preview a b)
 
 type Time = Float
 
@@ -58,13 +111,7 @@ stretchTo time (Signal f d) = Signal (f . (/ time) . (* d)) time
 instance Semigroup (Signal a) where
   (Signal a_fn a_dur) <> (Signal b_fn b_dur) = Signal (\t -> if t < a_dur then a_fn t else b_fn (t - a_dur)) (a_dur + b_dur)
 
-instance Monoid (Signal a) where
-  mempty = pure undefined
-
 -- Fields
-animateField :: a -> Traversal' a b -> Signal b -> Signal a
-animateField initial field signal = set (sigLens field) signal (pure initial)
-
 sigLens :: Traversal' a b -> Traversal' (Signal a) (Signal b)
 sigLens field = traversal fn
   where
@@ -112,47 +159,66 @@ instance Lerp Vec2 where
   lerp' a b t = Linear.lerp t a b
 
 -- Keys
-data Key a where
-  Key :: (Lerp b) => Traversal' a b -> b -> Time -> Key a
-  Key' :: (Lerp b) => Traversal' a b -> b -> Ease Float -> Time -> Key a
+class Chainable k a where
+  chain :: a -> k a -> Signal a
 
 newtype Delay a where
   Delay :: Time -> Delay a
 
-data KeysData a = KeyList [Key a] | KeysDelay (Delay a)
+instance Chainable Delay a where
+  chain val (Delay t) = Signal (const val) t
 
-class Keyish k a where
-  list :: k a -> KeysData a
+newtype MapEnd a = MapEnd (a -> a)
+
+instance Chainable MapEnd a where
+  chain val (MapEnd f) = pure (f val)
+
+data Key a where
+  Key' :: (Lerp b) => (Traversal' a b) -> b -> (Ease Float) -> Time -> Key a
+
+key' :: (Lerp b) => Traversal' a b -> b -> Ease Float -> Time -> Key a
+key' = Key'
+
+key :: (Lerp b) => Traversal' a b -> b -> Time -> Key a
+key trav val = key' trav val cubicInOut
+
+ky :: (Lerp a) => a -> Time -> Key a
+ky = key id
+
+ky' :: (Lerp a) => a -> Ease Float -> Time -> Key a
+ky' = key' id
+
+instance Chainable Key a where
+  chain initial k = chain initial (Keys [k])
+
+simul :: [Time -> Key a] -> Time -> Keys a
+simul keys time = Keys (map ($ time) keys)
 
 newtype Keys a = Keys [Key a]
 
-instance Keyish Keys a where
-  list (Keys l) = KeyList l
+instance Chainable Keys a where
+  chain initial (Keys keys) = foldr applyKey (pure initial) keys
+    where
+      applyKey (Key' _ _ _ 0) = id
+      applyKey (Key' field val easing time) = over (sigLens field) (\oldSig -> (stretch time . ease easing . lerp (start oldSig)) val)
 
-instance Keyish Delay a where
-  list = KeysDelay
+data Sig a where
+  Sig :: (Traversal' a b) -> Signal b -> Sig a
 
-data All a = All [Time -> Key a] Time
+sig :: Traversal' a b -> Signal b -> Sig a
+sig = Sig
 
-instance Keyish All a where
-  list (All keys time) = KeyList $ map ($ time) keys
+sigs :: Traversal' a b -> [Signal b] -> Sig a
+sigs trav sigBs = sig (partsOf trav) (sequenceA sigBs)
 
-instance Keyish Key a where
-  list key = KeyList [key]
+instance Chainable Sig a where
+  chain initial (Sig trav sigB) = set (sigLens trav) sigB (pure initial)
 
-(|~) :: (Keyish k a) => a -> k a -> Signal a
-initial |~ k = case list k of
-  (KeyList keys) -> inner initial keys
-  (KeysDelay (Delay t)) -> Signal (const initial) t
-  where
-    inner initial = foldr thing (pure initial)
-      where
-        thing (Key field val time) = thing (Key' field val cubicInOut time)
-        thing (Key' _ _ _ 0) = id
-        thing (Key' field val easing time) = over (sigLens field) (\oldSig -> (stretch time . ease easing . lerp (start oldSig)) val)
+(|~) :: (Chainable k a) => a -> k a -> Signal a
+initial |~ k = initial `chain` k
 
-(~>) :: (Keyish k a) => Signal a -> k a -> Signal a
-signal ~> k = signal <> (end signal |~ k)
+(~>) :: (Chainable k a) => Signal a -> k a -> Signal a
+signal ~> c = signal <> (end signal |~ c)
 
 -- Objects
 type Color = Colour Float
@@ -189,7 +255,6 @@ instance Element Circle where
 instance (Element a) => Element [a] where
   draw = foldr ((<>) . draw) mempty
   box = foldr1 combine . map box
-
 
 class HasTranslation a where
   translation :: Lens' a Vec2

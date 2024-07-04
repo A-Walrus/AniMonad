@@ -3,24 +3,31 @@
 module Main where
 
 import AniMonad
+import Control.Monad (forM_)
+import Data.List (sortOn)
 import System.Directory
 import System.FilePath (replaceExtension)
-import System.Process
-import Control.Monad (forM_)
 import System.FilePath.Posix ((</>))
+import System.Process
 
 main :: IO ()
 main = writeItemsToFiles f
   where
     base = [at (V2 (x * 40) 0) (Rect 20 20 white) | x <- [-5 .. 5]]
-    animation =
+    anim =
       base
-        |~ Key (ix 7 . color) blue 0.5
-        & partsOf (sigLens (traverse . y))
-        .~ [ 0 |~ Delay (0.5 + i * 0.075) ~> Key id (-50) 0.3 ~> Key id 0 0.3
-             | i <- [0 .. 10]
-           ]
-    svgAnim = svgDoc . draw <$> animation
+        |~ simul [key (ix 4 . color) blue, key (ix 7 . color) red] 0.5
+        ~> key (adjoin (ix 4) (ix 7) . y) 40 1
+        ~> simul [key (ix 4 . x) (get (ix 7 . x) base), key (ix 7 . x) (get (ix 4 . x) base)] 1
+        ~> key (adjoin (ix 4) (ix 7) . y) 0 1
+        ~> MapEnd (sortOn (view x))
+        ~> key (adjoin (ix 4) (ix 7) . color) white 0.5
+        ~> sigs
+          (traverse . y)
+          [ 0 |~ Delay (i * 0.075) ~> ky (-50) 0.3 ~> ky 0 0.3
+            | i <- [0 .. 10]
+          ]
+    svgAnim = svgDoc . draw <$> anim
     f = frames svgAnim
 
 convertSvgToPng :: FilePath -> IO ()
