@@ -201,20 +201,36 @@ inner = lens (\(Transformed _ a) -> a) (\(Transformed t _) a -> Transformed t a)
 transform :: Lens' (Transformed a) Transform
 transform = lens (\(Transformed t _) -> t) (\(Transformed _ a) t -> Transformed t a)
 
-x :: Lens' (V2 a) a
-x = lens (\(V2 x _) -> x) (\(V2 _ y) x -> V2 x y)
+class HasTranslation a where
+  translation :: Lens' a Vec2
 
-y :: Lens' (V2 a) a
-y = lens (\(V2 _ y) -> y) (\(V2 x _) y -> V2 x y)
+instance HasTranslation Transform where
+  translation = lens v s
+    where
+      v (V3 (V3 _ _ x) (V3 _ _ y) _) = V2 x y
+      s (V3 (V3 a b _) (V3 d e _) (V3 h i g)) (V2 x y) = V3 (V3 a b x) (V3 d e y) (V3 h i g)
+
+instance HasTranslation (Transformed a) where
+  translation = transform . translation
+
+class HasXY a where
+  x :: Lens' a Float
+  y :: Lens' a Float
+
+instance HasXY Vec2 where
+  x = lens (\(V2 x _) -> x) (\(V2 _ y) x -> V2 x y)
+  y = lens (\(V2 _ y) -> y) (\(V2 x _) y -> V2 x y)
+
+instance HasXY Transform where
+  x = translation . x
+  y = translation . y
+
+instance HasXY (Transformed a) where
+  x = transform . x
+  y = transform . y
 
 at :: (Element a) => Vec2 -> a -> Transformed a
 at (V2 x y) = Transformed (V3 (V3 1 0 x) (V3 0 1 y) (V3 0 1 0))
-
-translation :: Lens' Transform Vec2
-translation = lens v s
-  where
-    v (V3 (V3 _ _ x) (V3 _ _ y) _) = V2 x y
-    s (V3 (V3 a b _) (V3 d e _) (V3 h i g)) (V2 x y) = V3 (V3 a b x) (V3 d e y) (V3 h i g)
 
 instance Element (Transformed a) where
   draw (Transformed txform element) = g_ [transform_ transformT] (draw element)

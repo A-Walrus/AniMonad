@@ -13,7 +13,7 @@ main = writeItemsToFiles f
     base = [at (V2 (x * 40) 0) (Rect 20 20 white) | x <- [-5 .. 5]]
     animation =
       pure base
-        & partsOf (sigLens (traverse . transform . translation . y))
+        & partsOf (sigLens (traverse . y))
         .~ [ 0 |~ Delay (i * 0.075) ~> Key id (-50) 0.3 ~> Key id 0 0.3
              | i <- [0 .. 10]
            ]
