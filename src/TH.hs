@@ -2,8 +2,10 @@
 
 module TH where
 
+import Control.Lens
+import Data.Maybe (mapMaybe)
 import Language.Haskell.TH
-import Linear
+import Linear hiding (trace)
 import Lucid.Svg
 
 type Vec2 = V2 Float
@@ -32,6 +34,34 @@ genInstance n = do
     <$> instanceD
       (cxt $ map (appT (conT ''Element) . pure) types)
       (appT (conT ''Element) $ pure tupleType)
-      [ funD 'draw [clause [return pattern] (normalB (return drawExp)) []],
-        funD 'box [clause [return pattern] (normalB (return boxExp)) []]
+      [ funD 'draw [clause [pure pattern] (normalB (pure drawExp)) []],
+        funD 'box [clause [pure pattern] (normalB (pure boxExp)) []]
       ]
+
+type Transform = M33 Float
+
+data Transformed a = (Element a) => Transformed {_transform :: Transform, _val :: a}
+
+inner :: Lens' (Transformed a) a
+inner = lens (\(Transformed _ a) -> a) (\(Transformed t _) a -> Transformed t a)
+
+transform :: Lens' (Transformed a) Transform
+transform = lens (\(Transformed t _) -> t) (\(Transformed _ a) t -> Transformed t a)
+
+makeElementLenses :: Name -> Q [Dec]
+makeElementLenses name = do
+  thing <- makeFieldsNoPrefix name
+  let y = mapMaybe getInstance thing
+  let new = map newInstance y
+  pure thing <> pure new
+  where
+    getInstance :: Dec -> Maybe (Cxt, Type, [Dec])
+    getInstance (InstanceD _ c typ decs) = Just (c, typ, decs)
+    getInstance _ = Nothing
+    newInstance :: (Cxt, Type, [Dec]) -> Dec
+    newInstance (ctx, AppT (AppT a b) c, decs) = InstanceD Nothing ctx (AppT (AppT a (AppT (ConT ''Transformed) b)) c) (map newMethod decs)
+    newInstance _ = undefined
+
+    newMethod :: Dec -> Dec
+    newMethod (FunD n _) = FunD n [Clause [] (NormalB (InfixE (Just (VarE 'inner)) (VarE '(.)) (Just (VarE n)))) []]
+    newMethod e = e

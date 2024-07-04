@@ -1,3 +1,4 @@
+{-# LANGUAGE DuplicateRecordFields #-}
 {-# LANGUAGE FunctionalDependencies #-}
 {-# LANGUAGE MonoLocalBinds #-}
 {-# LANGUAGE OverloadedStrings #-}
@@ -159,10 +160,9 @@ type Color = Colour Float
 showColor :: Color -> Text
 showColor = pack . sRGB24show
 
-data Rect = Rect {_width, _height :: Float, _rectColor :: Color} deriving (Show)
+data Rect = Rect {_width, _height :: Float, _color :: Color} deriving (Show)
 
-$(makeLenses ''Rect)
-$(makeFields ''Rect)
+$(makeElementLenses ''Rect)
 
 showT :: (Show a) => a -> Text
 showT = pack . show
@@ -176,10 +176,9 @@ instance Element Rect where
     where
       (w2, h2) = (w / 2, h / 2)
 
-data Circle = Circle {_radius :: Float, _circleColor :: Color} deriving (Show)
+data Circle = Circle {_radius :: Float, _color :: Color} deriving (Show)
 
-$(makeLenses ''Circle)
-$(makeFields ''Circle)
+$(makeElementLenses ''Circle)
 
 instance Element Circle where
   draw (Circle r c) = circle_ [r_ rad, fill_ (showColor c)]
@@ -191,15 +190,6 @@ instance (Element a) => Element [a] where
   draw = foldr ((<>) . draw) mempty
   box = foldr1 combine . map box
 
-type Transform = M33 Float
-
-data Transformed a = (Element a) => Transformed Transform a
-
-inner :: Lens' (Transformed a) a
-inner = lens (\(Transformed _ a) -> a) (\(Transformed t _) a -> Transformed t a)
-
-transform :: Lens' (Transformed a) Transform
-transform = lens (\(Transformed t _) -> t) (\(Transformed _ a) t -> Transformed t a)
 
 class HasTranslation a where
   translation :: Lens' a Vec2
