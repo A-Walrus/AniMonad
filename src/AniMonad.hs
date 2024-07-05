@@ -125,7 +125,7 @@ sigLens field = traversal fn
         len = length (start sigBs) -- HACK this assumes that the number of elements remains constant
 
 ixs :: (Ixed m) => [Index m] -> Traversal' m (IxValue m)
-ixs [] = undefined -- TODO maybe provide an empty traversal
+ixs [] = ignored
 ixs [a] = ix a
 ixs (a : l) = adjoin (ix a) (ixs l)
 
@@ -224,7 +224,7 @@ keys = Keys
 instance Chainable Keys a where
   after initial (Keys keys) = foldr applyKey (pure initial) keys
     where
-      applyKey (Key' _ _ _ 0) = id
+      applyKey (Key' _ _ _ 0) = id -- FIXME is this correct?
       applyKey (Key' field val easing time) = over (sigLens field) (\oldSig -> (stretch time . ease easing . lerp (start oldSig)) val)
 
 data Inner a where
