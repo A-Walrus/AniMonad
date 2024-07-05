@@ -24,9 +24,7 @@ main = writeItemsToFiles f
         ~> key (ixs [4, 7] . y) 0 1
         ~> mapEnd (sortOn (view x))
         ~> key (ixs [4, 7, 0] . color) white 0.5
-        ~> inners
-          (traverse . y)
-          [delay (i * 0.075) ~> ky (-50) 0.3 ~> ky 0 0.3 | i <- [0 .. 10]]
+        ~> inners (traverse . y) [delay (i * 0.075) ~> ky (-50) 0.3 ~> ky 0 0.3 | i <- [0 .. 10]]
     svgAnim = svgDoc . draw <$> anim
     f = frames svgAnim
 
