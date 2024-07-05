@@ -41,8 +41,8 @@ data Rectish = Rectish {_w, _h :: Float, _num :: Int}
 
 $(makeLenses ''Rectish)
 
-keys :: Test
-keys = test [same (get (sigLens h) scene) (1 |~ key id 10 1 ~> key id 1 1)]
+testKeys :: Test
+testKeys = test [same (get (sigLens h) scene) (1 |~ key id 10 1 ~> key id 1 1)]
   where
     scene :: Signal Rectish
     scene = Rectish 1 1 1 |~ key h 10 1 ~> simul [key w 1, key h 1, key num 37] 1
@@ -63,7 +63,7 @@ instant :: Test
 instant = same ((0 :: Float) |~ ky 1 1) (0 |~ ky 0 0 ~> ky 1 1)
 
 tests :: Test
-tests = test [frameTest, subSig, timings, keys, indexSignal, instant, manySignal, testMapEnd]
+tests = test [frameTest, subSig, timings, testKeys, indexSignal, instant, manySignal, testMapEnd]
 
 main :: IO ()
 main = do
