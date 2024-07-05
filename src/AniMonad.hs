@@ -17,6 +17,7 @@ module AniMonad
     unframes,
     lerp,
     sigLens,
+    ixs,
     extend,
     stretch,
     stretchTo,
@@ -27,13 +28,15 @@ module AniMonad
     (~>),
     delay,
     simul,
+    keys,
     key,
     key',
     ky,
     ky',
     mapEnd,
-    sig,
-    sigs,
+    inner,
+    inners,
+    fn,
     Ease,
     svgDoc,
     Rect (Rect),
@@ -42,7 +45,6 @@ module AniMonad
     width,
     height,
     radius,
-    inner,
     color,
     SomeElement (SomeElement),
     Transformed (Transformed),
@@ -122,6 +124,11 @@ sigLens field = traversal fn
       where
         len = length (start sigBs) -- HACK this assumes that the number of elements remains constant
 
+ixs :: (Ixed m) => [Index m] -> Traversal' m (IxValue m)
+ixs [] = undefined -- TODO maybe provide an empty traversal
+ixs [a] = ix a
+ixs (a : l) = adjoin (ix a) (ixs l)
+
 -- Frame
 fps :: Time
 fps = 24
@@ -158,14 +165,29 @@ instance Lerp Color where
 instance Lerp Vec2 where
   lerp' a b t = Linear.lerp t a b
 
+instance (Lerp a) => Lerp [a] where
+  lerp' as bs t = zipWith (\a b -> lerp' a b t) as bs
+
 -- Keys
 class Chainable k a where
-  chain :: a -> k a -> Signal a
+  after :: a -> k a -> Signal a
 
 newtype Chain a = Chain (a -> Signal a)
 
 instance Chainable Chain a where
-  chain val (Chain fn) = fn val
+  after val (Chain fn) = fn val
+
+instance Chainable Signal a where
+  after _ s = s
+
+data Fn a where
+  Fn :: (Chainable b a) => (a -> b a) -> Fn a
+
+fn :: (Chainable b a) => (a -> b a) -> Fn a
+fn = Fn
+
+instance Chainable Fn a where
+  after val (Fn f) = after val (f val)
 
 delay :: Time -> Chain a
 delay t = Chain (\val -> Signal (const val) t)
@@ -189,36 +211,49 @@ ky' :: (Lerp a) => a -> Ease Float -> Time -> Key a
 ky' = key' id
 
 instance Chainable Key a where
-  chain initial k = chain initial (Keys [k])
+  after initial k = after initial (Keys [k])
 
 simul :: [Time -> Key a] -> Time -> Keys a
 simul keys time = Keys (map ($ time) keys)
 
 newtype Keys a = Keys [Key a]
 
+keys :: [Key a] -> Keys a
+keys = Keys
+
 instance Chainable Keys a where
-  chain initial (Keys keys) = foldr applyKey (pure initial) keys
+  after initial (Keys keys) = foldr applyKey (pure initial) keys
     where
       applyKey (Key' _ _ _ 0) = id
       applyKey (Key' field val easing time) = over (sigLens field) (\oldSig -> (stretch time . ease easing . lerp (start oldSig)) val)
 
-data Sig a where
-  Sig :: (Traversal' a b) -> Signal b -> Sig a
+data Inner a where
+  Inner :: (Chainable c b) => (Traversal' a b) -> c b -> Inner a
 
-sig :: Traversal' a b -> Signal b -> Sig a
-sig = Sig
+inner :: (Chainable c b) => Traversal' a b -> c b -> Inner a
+inner = Inner
 
-sigs :: Traversal' a b -> [Signal b] -> Sig a
-sigs trav sigBs = sig (partsOf trav) (sequenceA sigBs)
+inners :: (Chainable c b) => Traversal' a b -> [c b] -> Inner a
+inners trav cbs = inner (partsOf trav) thing
+  where
+    thing = Fn (\vals -> sequenceA [after val cb | val <- vals, cb <- cbs])
 
-instance Chainable Sig a where
-  chain initial (Sig trav sigB) = set (sigLens trav) sigB (pure initial)
+instance Chainable Inner a where
+  after initial (Inner trav c) = set (partsOf $ sigLens trav) x (pure initial)
+    where
+      x = map (`after` c) $ toListOf trav initial
 
 (|~) :: (Chainable k a) => a -> k a -> Signal a
-initial |~ k = initial `chain` k
+initial |~ k = initial `after` k
 
-(~>) :: (Chainable k a) => Signal a -> k a -> Signal a
-signal ~> c = signal <> (end signal |~ c)
+(~>) :: (Chainable k1 a, Chainable k2 a) => k1 a -> k2 a -> Chain a
+c1 ~> c2 = Chain (\val -> a val <> after (end (a val)) c2)
+  where
+    a val = after val c1
+
+infixl 7 ~>
+
+infixl 6 |~
 
 -- Objects
 type Color = Colour Float

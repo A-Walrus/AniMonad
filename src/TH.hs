@@ -42,8 +42,8 @@ type Transform = M33 Float
 
 data Transformed a = (Element a) => Transformed {_transform :: Transform, _val :: a}
 
-inner :: Lens' (Transformed a) a
-inner = lens (\(Transformed _ a) -> a) (\(Transformed t _) a -> Transformed t a)
+val :: Lens' (Transformed a) a
+val = lens (\(Transformed _ a) -> a) (\(Transformed t _) a -> Transformed t a)
 
 transform :: Lens' (Transformed a) Transform
 transform = lens (\(Transformed t _) -> t) (\(Transformed _ a) t -> Transformed t a)
@@ -63,5 +63,5 @@ makeElementLenses name = do
     newInstance _ = undefined
 
     newMethod :: Dec -> Dec
-    newMethod (FunD n _) = FunD n [Clause [] (NormalB (InfixE (Just (VarE 'inner)) (VarE '(.)) (Just (VarE n)))) []]
+    newMethod (FunD n _) = FunD n [Clause [] (NormalB (InfixE (Just (VarE 'val)) (VarE '(.)) (Just (VarE n)))) []]
     newMethod e = e

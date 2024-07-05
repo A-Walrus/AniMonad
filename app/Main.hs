@@ -1,3 +1,4 @@
+{-# OPTIONS_GHC -Wno-incomplete-uni-patterns #-}
 {-# OPTIONS_GHC -Wno-name-shadowing #-}
 
 module Main where
@@ -17,16 +18,15 @@ main = writeItemsToFiles f
     anim =
       base
         |~ simul [key (ix 4 . color) blue, key (ix 7 . color) red] 0.5
-        ~> key (adjoin (ix 4) (ix 7) . y) 40 1
-        ~> simul [key (ix 4 . x) (get (ix 7 . x) base), key (ix 7 . x) (get (ix 4 . x) base)] 1
-        ~> key (adjoin (ix 4) (ix 7) . y) 0 1
+        ~> inner (ix 0 . color) (ky yellow 0.5 ~> ky limegreen 0.5)
+        ~> key (ixs [4, 7] . y) 40 1
+        ~> inner (partsOf (ixs [4, 7] . x)) (fn (\[a, b] -> ky [b, a] 1))
+        ~> key (ixs [4, 7] . y) 0 1
         ~> mapEnd (sortOn (view x))
-        ~> key (adjoin (ix 4) (ix 7) . color) white 0.5
-        ~> sigs
+        ~> key (ixs [4, 7, 0] . color) white 0.5
+        ~> inners
           (traverse . y)
-          [ 0 |~ delay (i * 0.075) ~> ky (-50) 0.3 ~> ky 0 0.3
-            | i <- [0 .. 10]
-          ]
+          [delay (i * 0.075) ~> ky (-50) 0.3 ~> ky 0 0.3 | i <- [0 .. 10]]
     svgAnim = svgDoc . draw <$> anim
     f = frames svgAnim
 
