@@ -195,38 +195,6 @@ delay t = Chain (\val -> Signal (const val) t)
 mapEnd :: (a -> a) -> Chain a
 mapEnd fn = Chain (pure . fn)
 
-data Key a where
-  Key' :: (Lerp b) => (Traversal' a b) -> b -> (Ease Float) -> Time -> Key a
-
-key' :: (Lerp b) => Traversal' a b -> b -> Ease Float -> Time -> Key a
-key' = Key'
-
-key :: (Lerp b) => Traversal' a b -> b -> Time -> Key a
-key trav val = key' trav val cubicInOut
-
-ky :: (Lerp a) => a -> Time -> Key a
-ky = key id
-
-ky' :: (Lerp a) => a -> Ease Float -> Time -> Key a
-ky' = key' id
-
-instance Chainable Key a where
-  after initial k = after initial (Keys [k])
-
-simul :: [Time -> Key a] -> Time -> Keys a
-simul keys time = Keys (map ($ time) keys)
-
-newtype Keys a = Keys [Key a]
-
-keys :: [Key a] -> Keys a
-keys = Keys
-
-instance Chainable Keys a where
-  after initial (Keys keys) = foldr applyKey (pure initial) keys
-    where
-      applyKey (Key' _ _ _ 0) = id -- FIXME is this correct?
-      applyKey (Key' field val easing time) = over (sigLens field) (\oldSig -> (stretch time . ease easing . lerp (start oldSig)) val)
-
 data Inner a where
   Inner :: (Chainable c b) => (Traversal' a b) -> c b -> Inner a
 
@@ -238,10 +206,36 @@ inners trav cbs = inner (partsOf trav) thing
   where
     thing = Fn (\vals -> sequenceA [after val cb | val <- vals, cb <- cbs])
 
-instance Chainable Inner a where
-  after initial (Inner trav c) = set (partsOf $ sigLens trav) x (pure initial)
+key' :: (Lerp b) => Traversal' a b -> b -> Ease Float -> Time -> Inner a
+key' trav end _ 0 = inner trav (mapEnd (const end))
+key' trav end easing duration = inner trav (Fn (\start -> (stretch duration . ease easing) $ lerp start end))
+
+key :: (Lerp b) => Traversal' a b -> b -> Time -> Inner a
+key trav val = key' trav val cubicInOut
+
+ky :: (Lerp a) => a -> Time -> Inner a
+ky = key id
+
+ky' :: (Lerp a) => a -> Ease Float -> Time -> Inner a
+ky' = key' id
+
+simul :: [Time -> Inner a] -> Time -> Keys a
+simul keys time = Keys (map ($ time) keys)
+
+newtype Keys a = Keys [Inner a]
+
+keys :: [Inner a] -> Keys a
+keys = Keys
+
+instance Chainable Keys a where
+  after initial (Keys keys) = foldr applyInner (pure initial) keys
     where
-      x = map (`after` c) $ toListOf trav initial
+      applyInner (Inner trav c) = set (partsOf $ sigLens trav) x
+        where
+          x = map (`after` c) $ toListOf trav initial
+
+instance Chainable Inner a where
+  after initial a = after initial (Keys [a])
 
 (|~) :: (Chainable k a) => a -> k a -> Signal a
 initial |~ k = initial `after` k
