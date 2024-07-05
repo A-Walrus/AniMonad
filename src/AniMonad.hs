@@ -58,18 +58,20 @@ module AniMonad
   )
 where
 
+import Control.Exception (assert)
 import Control.Lens hiding (at, children, element, transform)
 import Control.Lens.Unsound (adjoin)
 import Data.Colour hiding (over)
 import Data.Colour.Names
 import Data.Colour.SRGB
-import Data.List (intercalate)
+import Data.List (intercalate, nub)
 import Data.Maybe (fromJust)
 import Data.Monoid qualified
 import Data.Text (Text, pack)
 import Ease
 import Linear (M33, V2 (V2), V3 (V3), identity)
 import Linear qualified
+import Linear.Matrix ((!*))
 import Lucid.Svg
 import TH
 
@@ -118,16 +120,17 @@ sigLens :: Traversal' a b -> Traversal' (Signal a) (Signal b)
 sigLens field = traversal fn
   where
     fn bfb (sa :: Signal a) = ((\sbs -> (\a bs -> a & partsOf field .~ bs) <$> sa <*> sbs) <$>) $ sequenceA <$> traverse bfb (decompose $ toListOf field <$> sa)
-
     decompose :: Signal [b] -> [Signal b]
-    decompose sigBs = [(!! i) <$> sigBs | i <- [0 .. (len - 1)]]
+    decompose sigBs = [(\l -> assert (length l == len) (l !! i)) <$> sigBs | i <- [0 .. (len - 1)]]
       where
-        len = length (start sigBs) -- HACK this assumes that the number of elements remains constant
+        len = length (start sigBs)
 
-ixs :: (Ixed m) => [Index m] -> Traversal' m (IxValue m)
+ixs :: (Ixed m, Eq (Index m)) => [Index m] -> Traversal' m (IxValue m)
 ixs [] = ignored
 ixs [a] = ix a
-ixs (a : l) = adjoin (ix a) (ixs l)
+ixs all@(a : rest) = assert (unique all) (adjoin (ix a) (ixs rest))
+  where
+    unique l = length l == length (nub l)
 
 -- Frame
 fps :: Time
@@ -285,6 +288,11 @@ instance (Element a) => Element [a] where
   draw = foldr ((<>) . draw) mempty
   box = foldr1 combine . map box
 
+$(genElementInstances 8)
+
+data SomeElement where
+  SomeElement :: (Element a) => a -> SomeElement
+
 class HasTranslation a where
   translation :: Lens' a Vec2
 
@@ -321,12 +329,15 @@ instance Element (Transformed a) where
     where
       V3 (V3 a c e) (V3 b d f) _ = txform
       transformT = pack $ "matrix(" ++ intercalate "," (map show [a, b, c, d, e, f]) ++ ")"
-  box = undefined -- TODO
+  box (Transformed txform element) = BoundingBox (project txform min) (project txform max)
+    where
+      (BoundingBox min max) = box element
 
-$(genElementInstances 8)
-
-data SomeElement where
-  SomeElement :: (Element a) => a -> SomeElement
+project :: Transform -> Vec2 -> Vec2
+project mat v = dehomogenize (mat !* homogenize v)
+  where
+    homogenize (V2 a b) = V3 a b 1
+    dehomogenize (V3 a b _) = V2 a b
 
 docWidth, docHeight :: Int
 docWidth = 1024
