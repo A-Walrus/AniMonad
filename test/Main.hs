@@ -33,7 +33,7 @@ testTimings =
   test
     [ end l ~=? 1,
       end (extend 3 l) ~=? 1,
-      same (stretchTo 5 l) (stretch 5 l)
+      same (stretchTo 5 l) (stretchBy 5 l)
     ]
   where
     l = lerp 0 1 :: Signal Float
