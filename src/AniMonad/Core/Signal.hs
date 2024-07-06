@@ -20,6 +20,8 @@ module AniMonad.Core.Signal
     inner,
     inners,
     fn,
+    sample,
+    unsample,
   )
 where
 
@@ -62,6 +64,14 @@ stretchTo time (Signal f d) = Signal (f . (/ time) . (* d)) time
 
 ease :: Ease Time -> Signal a -> Signal a
 ease easing (Signal f d) = Signal (\t -> f $ d * easing (t / d)) d
+
+sample :: Time -> Signal a -> [a]
+sample step (Signal f dur) = map f [0, step .. (dur - step)]
+
+unsample :: Time -> [a] -> Signal a
+unsample step l = Signal f (fromIntegral (length l) * step)
+  where
+    f t = l !! min (floor (t / step)) (length l - 1)
 
 sigLens :: Traversal' a b -> Traversal' (Signal a) (Signal b)
 sigLens field = traversal f

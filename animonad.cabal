@@ -19,6 +19,7 @@ library
         AniMonad.Element.Base
         AniMonad.Element.Elements
         AniMonad.Element.TH
+        AniMonad.Export
 
     default-language: GHC2021
     ghc-options:      -Wall
@@ -30,7 +31,10 @@ library
         text ^>=2.1.1,
         colour >=2.3.6,
         template-haskell,
-        linear
+        linear,
+        directory,
+        process,
+        filepath
 
 executable animonad
     main-is:          Main.hs
@@ -39,10 +43,7 @@ executable animonad
     ghc-options:      -Wall
     build-depends:
         base ^>=4.17.2.1,
-        animonad,
-        directory,
-        process,
-        filepath
+        animonad
 
 test-suite animonad-test
     type:             exitcode-stdio-1.0
