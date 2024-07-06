@@ -14,7 +14,7 @@ $(genElementInstances 8) -- Element tuples
 data SomeElement where
   SomeElement :: (Element a) => a -> SomeElement
 
-data Rect = Rect {_width, _height :: Float, _color :: Color} deriving (Show)
+data Rect = Rect {_width, _height :: Float, _color :: Color, _cornerRadius :: Float} deriving (Show)
 
 $(makeElementLenses ''Rect)
 
@@ -23,11 +23,11 @@ instance (Element a) => Element [a] where
   box = foldr1 combine . map box
 
 instance Element Rect where
-  draw (Rect w h c) = rect_ [x_ (showT (-w2)), y_ (showT (-h2)), width_ (showT w), height_ (showT h), fill_ (showColor c)]
+  draw (Rect w h c r) = rect_ [x_ (showT (-w2)), y_ (showT (-h2)), width_ (showT w), height_ (showT h), fill_ (showColor c), rx_ (showT r)]
     where
       (w2, h2) = (w / 2, h / 2)
 
-  box (Rect w h _) = BoundingBox (V2 (-w2) (-h2)) (V2 w2 h2)
+  box (Rect w h _ _) = BoundingBox (V2 (-w2) (-h2)) (V2 w2 h2)
     where
       (w2, h2) = (w / 2, h / 2)
 

@@ -9,7 +9,7 @@ import Data.List (sortOn)
 main :: IO ()
 main = render anim
   where
-    base = [at (V2 (x * 40) 0) (Rect 20 20 white) | x <- [-5 .. 5]]
+    base = [at (V2 (x * 40) 0) (Rect 30 30 white 10) | x <- [-5 .. 5]]
     anim =
       base
         |~ simul [key (ix 4 . color) blue, key (ix 7 . color) red] 0.5
