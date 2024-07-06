@@ -1,23 +1,11 @@
 {-# LANGUAGE TemplateHaskellQuotes #-}
 
-module AniMonad.TH where
+module AniMonad.Element.TH where
 
+import AniMonad.Element.Base (Element (box, draw), combine, Transformed, val)
 import Control.Lens
 import Data.Maybe (mapMaybe)
 import Language.Haskell.TH
-import Linear hiding (trace)
-import Lucid.Svg
-
-type Vec2 = V2 Float
-
-class Element a where
-  draw :: a -> Svg ()
-  box :: a -> BoundingBox
-
-data BoundingBox = BoundingBox Vec2 Vec2
-
-combine :: BoundingBox -> BoundingBox -> BoundingBox
-combine (BoundingBox (V2 ax1 ay1) (V2 ax2 ay2)) (BoundingBox (V2 bx1 by1) (V2 bx2 by2)) = BoundingBox (V2 (min ax1 bx1) (min ay1 by1)) (V2 (max ax2 bx2) (max ay2 by2))
 
 genElementInstances :: Int -> Q [Dec]
 genElementInstances maxTupleSize = concat <$> mapM genInstance [2 .. maxTupleSize]
@@ -38,15 +26,6 @@ genInstance n = do
         funD 'box [clause [pure pattern] (normalB (pure boxExp)) []]
       ]
 
-type Transform = M33 Float
-
-data Transformed a = (Element a) => Transformed {_transform :: Transform, _val :: a}
-
-val :: Lens' (Transformed a) a
-val = lens (\(Transformed _ a) -> a) (\(Transformed t _) a -> Transformed t a)
-
-transform :: Lens' (Transformed a) Transform
-transform = lens (\(Transformed t _) -> t) (\(Transformed _ a) t -> Transformed t a)
 
 makeElementLenses :: Name -> Q [Dec]
 makeElementLenses name = do

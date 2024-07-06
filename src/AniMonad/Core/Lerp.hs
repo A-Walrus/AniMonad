@@ -1,8 +1,9 @@
 module AniMonad.Core.Lerp where
 
 import AniMonad.Core.Signal (Signal (Signal), Time)
-import Linear qualified
-import Data.Colour (Colour, blend)
+import AniMonad.Element.Base (Color, Vec2)
+import Data.Colour (blend)
+import qualified Linear
 
 class Lerp a where
   lerp :: a -> a -> Signal a
@@ -15,10 +16,10 @@ instance Lerp Float where
 instance Lerp Int where
   lerp' a b = round . lerp' (fromIntegral a :: Float) (fromIntegral b :: Float)
 
-instance Lerp (Colour Float)where
+instance Lerp Color where
   lerp' a b t = blend t b a
 
-instance Lerp (Linear.V2 Float) where
+instance Lerp Vec2 where
   lerp' a b t = Linear.lerp t a b
 
 instance (Lerp a) => Lerp [a] where

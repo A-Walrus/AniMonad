@@ -10,12 +10,15 @@ library
     exposed-modules:  AniMonad
     hs-source-dirs:   src
     other-modules:
-        AniMonad.TH
         AniMonad.Core
         AniMonad.Core.LensExt
         AniMonad.Core.Lerp
         AniMonad.Core.Signal
         AniMonad.Core.Keys
+        AniMonad.Element
+        AniMonad.Element.Base
+        AniMonad.Element.Elements
+        AniMonad.Element.TH
 
     default-language: GHC2021
     ghc-options:      -Wall
