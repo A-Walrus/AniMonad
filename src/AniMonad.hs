@@ -12,12 +12,12 @@ module AniMonad
     module Linear,
     module Data.Colour.Names,
     module Data.Colour.SRGB,
+    module AniMonad.Core,
     fps,
     frames,
     unframes,
     lerp,
     sigLens,
-    ixs,
     extend,
     stretch,
     stretchTo,
@@ -53,30 +53,23 @@ module AniMonad
     transform,
     x,
     y,
-    adjoin,
-    get,
   )
 where
 
+import AniMonad.Core
+import AniMonad.TH
 import Control.Exception (assert)
 import Control.Lens hiding (at, children, element, transform)
-import Control.Lens.Unsound (adjoin)
 import Data.Colour hiding (over)
 import Data.Colour.Names
 import Data.Colour.SRGB
-import Data.List (intercalate, nub)
-import Data.Maybe (fromJust)
-import Data.Monoid qualified
+import Data.List (intercalate)
 import Data.Text (Text, pack)
 import Ease
 import Linear (M33, V2 (V2), V3 (V3), identity)
 import Linear qualified
 import Linear.Matrix ((!*))
 import Lucid.Svg
-import TH
-
-get :: Getting (Data.Monoid.First a) s a -> s -> a
-get a b = fromJust (preview a b)
 
 type Time = Float
 
@@ -124,13 +117,6 @@ sigLens field = traversal fn
     decompose sigBs = [(\l -> assert (length l == len) (l !! i)) <$> sigBs | i <- [0 .. (len - 1)]]
       where
         len = length (start sigBs)
-
-ixs :: (Ixed m, Eq (Index m)) => [Index m] -> Traversal' m (IxValue m)
-ixs [] = ignored
-ixs [a] = ix a
-ixs all@(a : rest) = assert (unique all) (adjoin (ix a) (ixs rest))
-  where
-    unique l = length l == length (nub l)
 
 -- Frame
 fps :: Time

@@ -12,7 +12,7 @@ common warnings
 library
     import:           warnings
     exposed-modules:  AniMonad
-    other-modules:    TH
+    other-modules:    AniMonad.TH, AniMonad.Core, AniMonad.Core.LensExt
     build-depends:    
         base ^>=4.17.2.1,
         lens ^>=5.3.2,

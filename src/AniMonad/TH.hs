@@ -1,6 +1,6 @@
 {-# LANGUAGE TemplateHaskellQuotes #-}
 
-module TH where
+module AniMonad.TH where
 
 import Control.Lens
 import Data.Maybe (mapMaybe)
