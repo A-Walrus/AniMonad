@@ -1,13 +1,12 @@
 module AniMonad.Core.LensExt (get, ixs, adjoin) where
 
-
-import Control.Lens (Ixed, Index,Traversal',IxValue,ignored,ix, Getting)
+import Control.Exception (assert)
+import Control.Lens (Getting, Index, IxValue, Ixed, Traversal', ignored, ix)
+import Control.Lens.Combinators (preview)
 import Control.Lens.Unsound (adjoin)
 import Data.List (nub)
-import Control.Exception (assert)
-import qualified Data.Monoid
 import Data.Maybe (fromJust)
-import Control.Lens.Combinators (preview)
+import Data.Monoid qualified
 
 get :: Getting (Data.Monoid.First a) s a -> s -> a
 get a b = fromJust (preview a b)

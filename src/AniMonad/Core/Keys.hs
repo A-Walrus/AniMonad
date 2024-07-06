@@ -4,7 +4,7 @@ module AniMonad.Core.Keys where
 
 import AniMonad.Core.Lerp
 import AniMonad.Core.Signal (Inner, Time, ease, fn, inner, mapEnd, stretchBy)
-import Control.Lens
+import Control.Lens (Traversal')
 import Ease (Ease, cubicInOut)
 
 key' :: (Lerp b) => Traversal' a b -> b -> Ease Float -> Time -> Inner a

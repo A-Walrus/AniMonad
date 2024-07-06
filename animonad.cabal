@@ -1,55 +1,53 @@
-cabal-version:      3.0
-name:               animonad
-version:            0.1.0.0
-author:             A-Walrus
-maintainer:         ofek.r.guy@gmail.com
-build-type:         Simple
-extra-doc-files:    CHANGELOG.md
-
-common warnings
-    ghc-options: -Wall
+cabal-version:   3.0
+name:            animonad
+version:         0.1.0.0
+maintainer:      ofek.r.guy@gmail.com
+author:          A-Walrus
+build-type:      Simple
+extra-doc-files: CHANGELOG.md
 
 library
-    import:           warnings
     exposed-modules:  AniMonad
-    other-modules:    
-        AniMonad.TH,
-        AniMonad.Core,
-        AniMonad.Core.LensExt, 
-        AniMonad.Core.Lerp,
-        AniMonad.Core.Signal,
+    hs-source-dirs:   src
+    other-modules:
+        AniMonad.TH
+        AniMonad.Core
+        AniMonad.Core.LensExt
+        AniMonad.Core.Lerp
+        AniMonad.Core.Signal
         AniMonad.Core.Keys
-    build-depends:    
+
+    default-language: GHC2021
+    ghc-options:      -Wall
+    build-depends:
         base ^>=4.17.2.1,
         lens ^>=5.3.2,
         ease ^>=0.1.0,
-        lucid-svg ^>= 0.7.2.0,
-        text ^>= 2.1.1,
-        colour >= 2.3.6,
+        lucid-svg ^>=0.7.2.0,
+        text ^>=2.1.1,
+        colour >=2.3.6,
         template-haskell,
         linear
-    hs-source-dirs:   src
-    default-language: GHC2021
 
 executable animonad
-    import:           warnings
     main-is:          Main.hs
+    hs-source-dirs:   app
+    default-language: GHC2021
+    ghc-options:      -Wall
     build-depends:
         base ^>=4.17.2.1,
         animonad,
         directory,
         process,
         filepath
-    hs-source-dirs:   app
-    default-language: GHC2021
 
 test-suite animonad-test
-    import:           warnings
-    default-language: GHC2021
     type:             exitcode-stdio-1.0
-    hs-source-dirs:   test
     main-is:          Main.hs
+    hs-source-dirs:   test
     other-modules:    TH
+    default-language: GHC2021
+    ghc-options:      -Wall
     build-depends:
         base ^>=4.17.2.1,
         HUnit ^>=1.6,
