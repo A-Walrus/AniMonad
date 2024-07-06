@@ -4,6 +4,8 @@ version:         0.1.0.0
 maintainer:      ofek.r.guy@gmail.com
 author:          A-Walrus
 build-type:      Simple
+license:         BSD-3-Clause
+license-file:    LICENSE
 extra-doc-files: CHANGELOG.md
 
 library
