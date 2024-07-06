@@ -39,7 +39,7 @@ svgDoc content = do
 convertSvgToPng :: FilePath -> IO ()
 convertSvgToPng svgFile = do
   let pngFile = replaceExtension svgFile "png"
-  callProcess "rsvg-convert" ["-o", pngFile, svgFile]
+  callProcess "resvg" [svgFile, pngFile]
 
 writeItemsToFiles :: (Show a) => [a] -> IO ()
 writeItemsToFiles items = do
