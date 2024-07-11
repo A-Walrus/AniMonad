@@ -97,8 +97,8 @@ instance Monoid (Chain a) where
 chain :: (a -> Signal a) -> Chain a
 chain = inner id
 
-fn :: (a -> Chain a) -> Chain a
-fn f = chain (into f)
+fn :: (ChainFn c a) => c -> Chain a
+fn = inner id
 
 delay :: Time -> Chain a
 delay t = chain (\val -> Signal (const val) t)
