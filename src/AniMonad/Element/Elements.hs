@@ -1,14 +1,16 @@
 {-# LANGUAGE DuplicateRecordFields #-}
 {-# LANGUAGE FunctionalDependencies #-}
+{-# LANGUAGE MonoLocalBinds #-}
+{-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE TemplateHaskell #-}
 {-# OPTIONS_GHC -Wno-orphans #-}
-{-# LANGUAGE MonoLocalBinds #-}
 
 module AniMonad.Element.Elements where
 
 import AniMonad.Element.Base
 import AniMonad.Element.TH
 import Control.Lens.Combinators
+import Data.Text (pack)
 import Lucid.Svg
 
 $(genElementInstances 8) -- Element tuples
@@ -43,3 +45,16 @@ instance Element Circle where
     where
       rad = showT r
   box (Circle r _) = BoundingBox (V2 (-r) (-r)) (V2 r r)
+
+data Text = Text
+  { _str :: String,
+    _fontSize :: Float, -- TODO custom size type?
+    _color :: Color
+  }
+  deriving (Show)
+
+$(makeElementLenses ''Text)
+
+instance Element Text where
+  draw (Text {_str, _fontSize, _color}) = text_ [font_size_ (showT _fontSize), fill_ (showColor _color), font_family_ "Noto Sans", text_anchor_ "middle",dominant_baseline_ "central"] (toHtml (pack _str)) -- TODO font family, anchor
+  box = undefined -- TODO

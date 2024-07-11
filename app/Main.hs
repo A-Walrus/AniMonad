@@ -8,7 +8,8 @@ import Data.List (sortOn)
 main :: IO ()
 main = render anim
   where
-    base = [at (V2 (i * 80) 0) (Rect 60 60 white 10, Circle 10 black) | i <- [-5 .. 5]]
+    count = 10 :: Int
+    base = [at (V2 ((fromIntegral x - (fromIntegral count / 2)) * 80) 0) (Rect 60 60 white 10, Text (show x) 30 black) | x <- [0 .. (count - 1)]]
     anim =
       base |> simul [key (ix 4 . _1 . color) blue, key (ix 7 . _1 . color) red] 0.5
         <> inner (ix 0 . _2 . color) (ky yellow 0.5 <> ky limegreen 0.5)
