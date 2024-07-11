@@ -18,6 +18,7 @@ module AniMonad.Core.Signal
     (|>),
     mapEnd,
     inner,
+    innerFn,
     inners,
     fn,
     sample,
@@ -97,8 +98,11 @@ instance Monoid (Chain a) where
 chain :: (a -> Signal a) -> Chain a
 chain = inner id
 
-fn :: (ChainFn c a) => c -> Chain a
-fn = inner id
+fn :: (a -> Chain a) -> Chain a
+fn = innerFn id
+
+innerFn :: Traversal' a b -> (b -> Chain b) -> Chain a
+innerFn = inner
 
 delay :: Time -> Chain a
 delay t = chain (\val -> Signal (const val) t)

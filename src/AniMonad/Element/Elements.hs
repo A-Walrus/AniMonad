@@ -46,8 +46,8 @@ instance Element Circle where
       rad = showT r
   box (Circle r _) = BoundingBox (V2 (-r) (-r)) (V2 r r)
 
-data Text = Text
-  { _str :: String,
+data Text a = Text
+  { _str :: a,
     _fontSize :: Float, -- TODO custom size type?
     _color :: Color
   }
@@ -55,6 +55,7 @@ data Text = Text
 
 $(makeElementLenses ''Text)
 
-instance Element Text where
-  draw (Text {_str, _fontSize, _color}) = text_ [font_size_ (showT _fontSize), fill_ (showColor _color), font_family_ "Noto Sans", text_anchor_ "middle",dominant_baseline_ "central"] (toHtml (pack _str)) -- TODO font family, anchor
+instance (Show a) => Element (Text a) where
+  draw (Text {_str, _fontSize, _color}) = text_ [font_size_ (showT _fontSize), fill_ (showColor _color), font_family_ "Noto Sans", text_anchor_ "middle", dominant_baseline_ "central"] (toHtml (pack (show _str))) -- TODO font family, anchor
   box = undefined -- TODO
+
