@@ -26,7 +26,7 @@ testSigLens = same anim (get sig_lens (set sig_lens anim p))
 testMapEnd :: Test
 testMapEnd = end anim ~?= 7
   where
-    anim = (0 :: Float) |~ ky 1.0 1 ~> mapEnd (const 7)
+    anim = (0 :: Float) |> ky 1.0 1 <> mapEnd (const 7)
 
 testTimings :: Test
 testTimings =
@@ -43,25 +43,25 @@ data Rectish = Rectish {_w, _h :: Float, _num :: Int}
 $(makeLenses ''Rectish)
 
 testKeys :: Test
-testKeys = test [same (get (sigLens h) scene) (1 |~ key id 10 1 ~> key id 1 1)]
+testKeys = test [same (get (sigLens h) scene) (1 |> key id 10 1 <> key id 1 1)]
   where
     scene :: Signal Rectish
-    scene = Rectish 1 1 1 |~ key h 10 1 ~> simul [key w 1, key h 1, key num 37] 1
+    scene = Rectish 1 1 1 |> key h 10 1 <> simul [key w 1, key h 1, key num 37] 1
 
 testIndexSignal :: Test
-testIndexSignal = same (get (sigLens (ix 0)) scene) (1 |~ key id 5 1)
+testIndexSignal = same (get (sigLens (ix 0)) scene) (1 |> key id 5 1)
   where
     scene :: Signal [Float]
-    scene = [1, 2, 3] |~ key (ix 0) 5 1
+    scene = [1, 2, 3] |> key (ix 0) 5 1
 
 testManySignal :: Test
-testManySignal = test [same (get (sigLens (ix 0)) scene) (1 |~ ky 2 1), same (get (sigLens (ix 1)) scene) (1 |~ ky 3 1)]
+testManySignal = test [same (get (sigLens (ix 0)) scene) (1 |> ky 2 1), same (get (sigLens (ix 1)) scene) (1 |> ky 3 1)]
   where
     scene :: Signal [Float]
-    scene = pure [1, 1, 1] & partsOf (sigLens traverse) .~ [(1 :: Float) |~ ky i 1 | i <- [2 ..]]
+    scene = pure [1, 1, 1] & partsOf (sigLens traverse) .~ [(1 :: Float) |> ky i 1 | i <- [2 ..]]
 
 testInstant :: Test
-testInstant = same ((0 :: Float) |~ ky 1 1) (0 |~ ky 0 0 ~> ky 1 1)
+testInstant = same ((0 :: Float) |> ky 1 1) (0 |> ky 0 0 <> ky 1 1)
 
 $( testAll
      [ 'testFrame,
