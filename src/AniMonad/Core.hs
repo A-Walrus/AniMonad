@@ -13,4 +13,4 @@ import AniMonad.Core.Keys
 import AniMonad.Core.LensExt
 import AniMonad.Core.Lerp
 import AniMonad.Core.Signal
-import Control.Lens hiding (at, transform) -- FIXME
+import Control.Lens hiding (at, transform, (|>)) -- FIXME
