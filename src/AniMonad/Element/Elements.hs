@@ -2,14 +2,17 @@
 {-# LANGUAGE FunctionalDependencies #-}
 {-# LANGUAGE TemplateHaskell #-}
 {-# OPTIONS_GHC -Wno-orphans #-}
+{-# LANGUAGE MonoLocalBinds #-}
 
 module AniMonad.Element.Elements where
 
 import AniMonad.Element.Base
 import AniMonad.Element.TH
+import Control.Lens.Combinators
 import Lucid.Svg
 
 $(genElementInstances 8) -- Element tuples
+$(genTransformTuples 8) -- Element tuples
 
 data SomeElement where
   SomeElement :: (Element a) => a -> SomeElement
