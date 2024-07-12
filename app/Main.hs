@@ -12,6 +12,7 @@ main = render anim
     anim =
       base |> simul [key (ix 4 . _1 . color) blue, key (ix 7 . _1 . color) red] 0.5
         <> inner (ix 0 . _2 . color) (ky yellow 0.5 <> ky limegreen 0.5)
+        <> key (ix 0 . rotation) 90 1
         <> key (ixs [4, 7] . y) (-80) 1
         <> inner (partsOf (ixs [4, 7] . x)) (\[a, b] -> ky [b, a] 1)
         <> key (ixs [4, 7] . y) 0 1
