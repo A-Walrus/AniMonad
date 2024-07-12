@@ -1,6 +1,11 @@
 {-# LANGUAGE TemplateHaskellQuotes #-}
 
-module AniMonad.Element.TH (genElementInstances, makeElementLenses, genTransformTuples) where
+module AniMonad.Element.TH
+  ( genElementInstances,
+    makeElementLenses,
+    genTransformTuples,
+  )
+where
 
 import AniMonad.Element.Base (Element (box, draw), Transformed, combine, val)
 import Control.Lens

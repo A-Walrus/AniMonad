@@ -1,7 +1,29 @@
 {-# LANGUAGE TemplateHaskell #-}
 {-# OPTIONS_GHC -Wno-name-shadowing #-}
 
-module AniMonad.Element.Base (module Data.Colour.Names, V2 (V2), Vec2, Color, BoundingBox (BoundingBox), Transformed, Element (box, draw), showColor, val, combine, transform, Transform, project, at, x, y, translation, rotationR, rotation, showT) where
+module AniMonad.Element.Base
+  ( module Data.Colour.Names,
+    V2 (V2),
+    Vec2,
+    Color,
+    BoundingBox (BoundingBox),
+    Transformed,
+    Element (box, draw),
+    showColor,
+    val,
+    combine,
+    transform,
+    Transform,
+    project,
+    at,
+    x,
+    y,
+    translation,
+    rotationR,
+    rotation,
+    showT,
+  )
+where
 
 import Control.Lens (Lens', makeLensesFor)
 import Control.Lens.Combinators (lens)
@@ -52,7 +74,7 @@ scaleMat :: Vec2 -> Matrix
 scaleMat (V2 x y) = V3 (V3 x 0 0) (V3 0 y 0) (V3 0 0 1)
 
 asMat :: Transform -> Matrix
-asMat (Transform {_position, _rotation, _scale}) =  scaleMat _scale !*! translationMat _position !*! rotationMat _rotation
+asMat (Transform {_position, _rotation, _scale}) = scaleMat _scale !*! translationMat _position !*! rotationMat _rotation
 
 data Transformed a = (Element a) => Transformed {_transform :: Transform, _val :: a}
 
