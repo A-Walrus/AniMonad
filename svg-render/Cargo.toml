@@ -1,0 +1,12 @@
+[package]
+name = "svg-render"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+rayon = "1.10.0"
+resvg = "0.42.0"
+tiny-skia = "0.11.4"
+usvg = "0.42.0"

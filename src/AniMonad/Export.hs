@@ -7,7 +7,6 @@ import AniMonad.Element.Base
 import Control.Monad (forM_)
 import Lucid.Svg
 import System.Directory
-import System.FilePath (replaceExtension)
 import System.FilePath.Posix ((</>))
 import System.Process
 
@@ -36,17 +35,13 @@ svgDoc content = do
     w = showT docWidth
     (nh2, nw2) = (showT (-(docHeight `div` 2)), showT (-(docWidth `div` 2)))
 
-convertSvgToPng :: FilePath -> IO ()
-convertSvgToPng svgFile = do
-  let pngFile = replaceExtension svgFile "png"
-  callProcess "resvg" [svgFile, pngFile]
 
 writeItemsToFiles :: (Show a) => [a] -> IO ()
 writeItemsToFiles items = do
   createDirectoryIfMissing True "frames"
   deleteAllFilesInDirectory "frames"
   mapM_ writeItemToFile (zip fileNames items)
-  mapM_ convertSvgToPng fileNames
+  callProcess "svg-render/target/release/svg-render" ["frames"]
   callProcess "ffmpeg" ["-y", "-framerate", show fps, "-i", "frames/%d.png", "-c:v", "libx264", "-pix_fmt", "yuv420p", "output.mp4"]
   where
     fileNames = take (length items) $ map frameFile [0 :: Int ..]
