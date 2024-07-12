@@ -11,7 +11,6 @@ main :: IO ()
 main = render anim
   where
     values = [5, 4, 7, 6, 2, 3, 1] :: [Int]
-    try_swap :: Int -> Int -> Time -> Chain [Transformed (Rect, Text Int)]
     try_swap a b t =
       key (ixs [a, b] . y) (-80) t
         <> innerFn
@@ -31,4 +30,6 @@ main = render anim
     anim =
       base
         |> sort
+        <> inners (traverse . _1 . color) [delay (i * 0.03) <> ky gold 0.2 <> ky white 0.2 | i <- [0 .. 10]]
         <> inners (traverse . y) [delay (i * 0.05) <> ky (-90) 0.2 <> ky 0 0.2 | i <- [0 .. 10]]
+        <> delay 1
