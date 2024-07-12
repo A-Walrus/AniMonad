@@ -35,14 +35,12 @@ svgDoc content = do
     w = showT docWidth
     (nh2, nw2) = (showT (-(docHeight `div` 2)), showT (-(docWidth `div` 2)))
 
-
 writeItemsToFiles :: (Show a) => [a] -> IO ()
 writeItemsToFiles items = do
   createDirectoryIfMissing True "frames"
   deleteAllFilesInDirectory "frames"
   mapM_ writeItemToFile (zip fileNames items)
-  callProcess "svg-render/target/release/svg-render" ["frames"]
-  callProcess "ffmpeg" ["-y", "-framerate", show fps, "-i", "frames/%d.png", "-c:v", "libx264", "-pix_fmt", "yuv420p", "output.mp4"]
+  callProcess "svg-render/target/release/svg-render" ["frames", show fps, show (length items), show docWidth, show docHeight]
   where
     fileNames = take (length items) $ map frameFile [0 :: Int ..]
     writeItemToFile (file, item) = writeFile file (show item)
