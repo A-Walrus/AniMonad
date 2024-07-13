@@ -1,26 +1,15 @@
 {-# LANGUAGE OverloadedStrings #-}
 
-module AniMonad.Export (frames, unframes, fps, frameTime, render) where
+module AniMonad.Export (render) where
 
 import AniMonad.Core
-import AniMonad.Element.Base
+import AniMonad.Element.Base 
 import Control.Monad (forM_)
 import Lucid.Svg
 import System.Directory
 import System.FilePath.Posix ((</>))
 import System.Process
 
-fps :: Time
-fps = 24
-
-frameTime :: Time
-frameTime = 1 / fps
-
-frames :: Signal a -> [a]
-frames = sample frameTime
-
-unframes :: [a] -> Signal a
-unframes = unsample frameTime
 
 docWidth, docHeight :: Int
 docWidth = 1024
@@ -67,4 +56,4 @@ render :: (Element e) => Signal e -> IO ()
 render anim = writeItemsToFiles f
   where
     svgAnim = svgDoc . draw <$> anim
-    f = frames svgAnim
+    (Signal f) = svgAnim
