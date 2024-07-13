@@ -1,4 +1,3 @@
-{-# LANGUAGE FunctionalDependencies #-}
 {-# LANGUAGE MonoLocalBinds #-}
 
 module AniMonad.Core.Signal
@@ -15,12 +14,14 @@ module AniMonad.Core.Signal
     simul,
     keys,
     Chain (Chain),
+    chain,
     (|>),
     mapEnd,
     inner,
     innerFn,
     inners,
     fn,
+    asFn,
     sample,
     unsample,
   )
@@ -88,47 +89,23 @@ data Chain a where
 
 instance Semigroup (Chain a) where
   (<>) :: Chain a -> Chain a -> Chain a
-  c1 <> c2 = chain (\val -> a val <> after (end (a val)) c2)
+  c1 <> c2 = chain (\val -> a val <> asFn c2 (end (a val)))
     where
-      a val = after val c1
+      a = asFn c1
 
 instance Monoid (Chain a) where
   mempty = chain pure
 
-chain :: (a -> Signal a) -> Chain a
-chain = inner id
+inner :: Traversal' a b -> Chain b -> Chain a
+inner t x = Chain t (asFn x)
 
-fn :: (a -> Chain a) -> Chain a
-fn = innerFn id
-
-innerFn :: Traversal' a b -> (b -> Chain b) -> Chain a
-innerFn = inner
-
-delay :: Time -> Chain a
-delay t = chain (\val -> Signal (const val) t)
-
-mapEnd :: (a -> a) -> Chain a
-mapEnd f = chain (pure . f)
-
-class ChainFn c a | c -> a where
-  into :: c -> (a -> Signal a)
-
-instance ChainFn (a -> Signal a) a where
-  into = id
-
-instance ChainFn (Chain a) a where
-  into i = (`after` i)
-
-instance ChainFn (a -> Chain a) a where
-  into f v = after v (f v)
-
-inner :: (ChainFn c b) => Traversal' a b -> c -> Chain a
-inner t x = Chain t (into x)
+innerFn :: Traversal' a b  -> (b -> Chain b) -> Chain a
+innerFn t x = inner t (fn x) 
 
 inners :: Traversal' a b -> [Chain b] -> Chain a
-inners trav cbs = inner (partsOf trav) thing
+inners trav cbs = inner (partsOf trav) (chain thing)
   where
-    thing vals = sequenceA [after val cb | val <- vals, cb <- cbs]
+    thing vals = sequenceA [asFn cb val | val <- vals, cb <- cbs]
 
 simul :: [Time -> Chain a] -> Time -> Chain a
 simul l time = keys (map ($ time) l)
@@ -138,15 +115,27 @@ keys l = chain thing
   where
     thing initial = foldr applyChain (pure initial) l
 
+chain :: (a -> Signal a) -> Chain a
+chain = Chain id
+
+fn :: (a -> Chain a) -> Chain a
+fn f = chain (\x -> asFn (f x) x)
+
+delay :: Time -> Chain a
+delay t = chain (\val -> Signal (const val) t)
+
+mapEnd :: (a -> a) -> Chain a
+mapEnd f = chain (pure . f)
+
 applyChain :: Chain a -> Signal a -> Signal a
 applyChain (Chain trav c) s = set (partsOf $ sigLens trav) x s
   where
     x = map c $ toListOf trav (start s)
 
-after :: a -> Chain a -> Signal a
-initial `after` inn = applyChain inn (pure initial)
+asFn :: Chain a -> a -> Signal a
+asFn c initial = applyChain c (pure initial)
 
 (|>) :: a -> Chain a -> Signal a
-(|>) = after
+(|>) = flip asFn
 
 infixl 5 |>

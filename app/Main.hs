@@ -1,4 +1,3 @@
-{-# LANGUAGE AllowAmbiguousTypes #-}
 {-# OPTIONS_GHC -Wno-incomplete-uni-patterns #-}
 
 module Main where
@@ -15,10 +14,10 @@ main = render anim
       key (ixs [a, b] . y) (-80) t
         <> innerFn
           (partsOf (ixs [a, b]))
-          ( \[n1, n2] ->
+          (\[n1, n2] ->
               if (n1 ^. _2 . str) > (n2 ^. _2 . str)
                 then
-                  inner (partsOf (traverse . x)) (\[a1, a2] -> ky [a2, a1] t)
+                  innerFn (partsOf (traverse . x)) (\[a1, a2] -> ky [a2, a1] t)
                 else
                   mempty
           )
