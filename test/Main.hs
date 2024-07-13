@@ -10,11 +10,6 @@ import Test.HUnit
 same :: (Eq a, Show a) => Signal a -> Signal a -> Test
 same a b = test [duration a ~=? duration b]
 
--- testFrame :: Test
--- testFrame = initial ~=? (frames . unframes) initial
---   where
---     initial = [1, 3, 5, 2] :: [Int]
-
 testSigLens :: Test
 testSigLens = same anim (get sig_lens (set sig_lens anim p))
   where
@@ -65,18 +60,17 @@ testInstant :: Test
 testInstant = same ((0 :: Float) |> ky 1 1) (0 |> ky 0 0 <> ky 1 1)
 
 testDelay :: Test
-testDelay = same ((0 :: Float) |> delay (2*frameTime)) (0 |> delay frameTime <> delay frameTime)
+testDelay = same ((0 :: Float) |> delay (2 * frameTime)) (0 |> delay frameTime <> delay frameTime)
 
 $( testAll
-     [ -- 'testFrame,
-        'testDelay
-       -- 'testSigLens
-       -- 'testTimings
-       -- 'testKeys,
-       -- 'testIndexSignal,
-       -- 'testInstant,
-       -- 'testManySignal,
-       -- 'testMapEnd
+     [ 'testDelay,
+       'testSigLens,
+       'testTimings,
+       'testKeys,
+       'testIndexSignal,
+       'testInstant,
+       'testManySignal,
+       'testMapEnd
      ]
  )
 

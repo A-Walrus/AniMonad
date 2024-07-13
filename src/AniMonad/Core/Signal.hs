@@ -5,6 +5,7 @@ module AniMonad.Core.Signal
     Signal (Signal),
     fps,
     frameTime,
+    frames,
     end,
     start,
     extend,
@@ -22,7 +23,6 @@ module AniMonad.Core.Signal
     asFn,
     sample,
     duration,
-    applyChain,
     sigLens,
   )
 where
@@ -37,9 +37,6 @@ type Duration = Int
 toDur :: Time -> Duration
 toDur t = round (t / frameTime)
 
-sample :: Time -> (Time -> a) -> Signal a
-sample time f = Signal $ map f [0, frameTime .. time]
-
 fps :: Int
 fps = 24
 
@@ -47,6 +44,12 @@ frameTime :: Time
 frameTime = 1 / fromIntegral fps
 
 newtype Signal a = Signal [a] deriving (Show, Eq)
+
+sample :: Time -> (Time -> a) -> Signal a
+sample time f = Signal $ map f [0, frameTime .. time]
+
+frames :: Signal a -> [a]
+frames (Signal f) = init f
 
 duration :: Signal a -> Int
 duration (Signal l) = length l - 1
@@ -75,20 +78,6 @@ extend :: Int -> Signal a -> Signal a
 extend new_dur s = s <> Signal (replicate missing_frames (end s))
   where
     missing_frames = new_dur - duration s + 1
-
--- stretchBy :: Float -> Signal a -> Signal a
--- stretchBy fac (Signal f d) = Signal (f . (/ fac)) (d * fac)
-
--- stretchTo :: Float -> Signal a -> Signal a
--- stretchTo time (Signal f d) = Signal (f . (/ time) . (* d)) time
-
--- ease :: Ease Time -> Signal a -> Signal a
--- ease easing (Signal l) = Signal (\t -> f $ d * easing (t / d)) d
-
--- unsample :: Time -> [a] -> Signal a
--- unsample step l = Signal f (fromIntegral (length l) * step)
---   where
---     f t = l !! min (floor (t / step)) (length l - 1)
 
 sigLens :: Traversal' a b -> Traversal' (Signal a) (Signal b)
 sigLens field = traversal f

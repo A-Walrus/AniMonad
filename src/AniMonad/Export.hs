@@ -56,4 +56,4 @@ render :: (Element e) => Signal e -> IO ()
 render anim = writeItemsToFiles f
   where
     svgAnim = svgDoc . draw <$> anim
-    (Signal f) = svgAnim
+    f = frames svgAnim
