@@ -3,6 +3,7 @@
 
 module AniMonad.Element.Base
   ( module Data.Colour.Names,
+    sRGB24read,
     V2 (V2),
     Vec2,
     Color,
@@ -29,7 +30,7 @@ import Control.Lens (Lens', makeLensesFor)
 import Control.Lens.Combinators (lens)
 import Data.Colour (Colour)
 import Data.Colour.Names
-import Data.Colour.SRGB (sRGB24show)
+import Data.Colour.SRGB (sRGB24read, sRGB24show)
 import Data.List (intercalate)
 import Data.Text (Text, pack)
 import Linear (V2 (V2), V3 (V3), (!*!))
@@ -55,7 +56,7 @@ data BoundingBox = BoundingBox Vec2 Vec2
 combine :: BoundingBox -> BoundingBox -> BoundingBox
 combine (BoundingBox (V2 ax1 ay1) (V2 ax2 ay2)) (BoundingBox (V2 bx1 by1) (V2 bx2 by2)) = BoundingBox (V2 (min ax1 bx1) (min ay1 by1)) (V2 (max ax2 bx2) (max ay2 by2))
 
-data Transform = Transform {_position :: Vec2, _rotation :: Float, _scale :: Vec2}
+data Transform = Transform {_position :: Vec2, _rotation :: Float, _scale :: Vec2} deriving (Show)
 
 $(makeLensesFor [("_position", "_position'"), ("_rotation", "_rotation'"), ("_scale", "_scale'")] ''Transform)
 
@@ -77,6 +78,9 @@ asMat :: Transform -> Matrix
 asMat (Transform {_position, _rotation, _scale}) = scaleMat _scale !*! translationMat _position !*! rotationMat _rotation
 
 data Transformed a = (Element a) => Transformed {_transform :: Transform, _val :: a}
+
+instance (Show a) => Show (Transformed a) where
+  show (Transformed t v) = "Transformed " ++ show t ++" "++ show v
 
 val :: Lens' (Transformed a) a
 val = lens (\(Transformed _ a) -> a) (\(Transformed t _) a -> Transformed t a)

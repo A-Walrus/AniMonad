@@ -24,9 +24,10 @@ testSigLens = same anim (get sig_lens (set sig_lens anim p))
     sig_lens = sigLens _1
 
 testMapEnd :: Test
-testMapEnd = end anim ~?= 7
+testMapEnd = test [end (0 |> anim1) ~?= 7, end (1 |> anim2) ~?= 14]
   where
-    anim = (0 :: Float) |> ky 1.0 1 <> mapEnd (const 7)
+    anim1 :: Chain Float = ky 1.0 1 <> mapEnd (const 7)
+    anim2 = anim1 <> mapEnd (* 2)
 
 testTimings :: Test
 testTimings =

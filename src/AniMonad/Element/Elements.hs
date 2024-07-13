@@ -56,6 +56,6 @@ data Text a = Text
 $(makeElementLenses ''Text)
 
 instance (Show a) => Element (Text a) where
-  draw (Text {_str, _fontSize, _color}) = text_ [font_size_ (showT _fontSize), fill_ (showColor _color), font_family_ "Noto Sans", text_anchor_ "middle", dominant_baseline_ "central"] (toHtml (pack (show _str))) -- TODO font family, anchor
+  draw (Text {_str, _fontSize, _color}) = text_ [font_size_ (showT _fontSize), fill_ (showColor _color), font_family_ "monospace", text_anchor_ "middle", dominant_baseline_ "central"] (toHtml (pack (show _str))) -- TODO font family, anchor
   box = undefined -- TODO
 
