@@ -14,6 +14,7 @@ module AniMonad.Core.Signal
     keys,
     Chain (Chain),
     chain,
+    signal,
     (|>),
     mapEnd,
     inner,
@@ -121,6 +122,9 @@ keys l = chain thing
 
 chain :: (a -> Signal a) -> Chain a
 chain = Chain id
+
+signal :: Signal a -> Chain a
+signal = chain . const
 
 fn :: (a -> Chain a) -> Chain a
 fn f = chain (\x -> asFn (f x) x)
