@@ -50,23 +50,15 @@ fn main() {
             .spawn()
             .expect("Failed to start ffmpeg");
         let stdin = ffmpeg.stdin.as_mut().expect("Failed to open stdin");
-        let mut frame_cache: Vec<(usize, Vec<u8>)> = Vec::new();
+        let mut frame_cache: Vec<Option<Vec<u8>>> = vec![None; num_frames];
         let mut frame = 0;
         while frame < num_frames {
-            let a: (usize, Vec<u8>) = rx.recv().unwrap();
-
-            // Insert the element at the correct position
-            frame_cache.insert(
-                frame_cache
-                    .binary_search_by(|&(x, _)| x.cmp(&a.0).reverse())
-                    .unwrap_or_else(|e| e),
-                a,
-            );
-
-            while frame_cache.last().is_some_and(|x| x.0 == frame) {
-                let current_frame = frame_cache.pop().unwrap();
+            let (index, data): (usize, Vec<u8>) = rx.recv().unwrap();
+            frame_cache[index] = Some(data);
+            while frame < num_frames && frame_cache[frame].is_some() {
+                let current_frame = frame_cache[frame].take().unwrap();
                 stdin
-                    .write_all(&current_frame.1)
+                    .write_all(&current_frame)
                     .expect("Failed to write data");
                 frame += 1;
             }
