@@ -36,7 +36,7 @@ type Time = Float
 type Duration = Int
 
 toDur :: Time -> Duration
-toDur t = round (t / frameTime)
+toDur t = round (t * fromIntegral fps)
 
 fps :: Int
 fps = 24
