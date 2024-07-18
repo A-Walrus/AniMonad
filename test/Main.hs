@@ -7,6 +7,12 @@ import System.Exit qualified as Exit
 import TH
 import Test.HUnit
 
+zero :: Float
+zero = 0
+
+one :: Float
+one = 1
+
 same :: (Eq a, Show a) => Signal a -> Signal a -> Test
 same a b = test [duration a ~=? duration b]
 
@@ -54,13 +60,16 @@ testManySignal :: Test
 testManySignal = test [same (get (sigLens (ix 0)) scene) (1 |> ky 2 1), same (get (sigLens (ix 1)) scene) (1 |> ky 3 1)]
   where
     scene :: Signal [Float]
-    scene = pure [1, 1, 1] & partsOf (sigLens traverse) .~ [(1 :: Float) |> ky i 1 | i <- [2 ..]]
+    scene = pure [1, 1, 1] & partsOf (sigLens traverse) .~ [one |> ky i 1 | i <- [2 ..]]
 
 testInstant :: Test
-testInstant = same ((0 :: Float) |> ky 1 1) (0 |> ky 0 0 <> ky 1 1)
+testInstant = same (zero |> ky 1 1) (0 |> ky 0 0 <> ky 1 1)
 
 testDelay :: Test
-testDelay = same ((0 :: Float) |> delay (2 * frameTime)) (0 |> delay frameTime <> delay frameTime)
+testDelay = same (zero |> delay (2 * frameTime)) (0 |> delay frameTime <> delay frameTime)
+
+testInners :: Test
+testInners = same ([one, 2] |> ky [3, 4] 1) ([1, 2] |> inners traverse [ky 3 1, ky 4 1])
 
 $( testAll
      [ 'testDelay,
@@ -70,7 +79,8 @@ $( testAll
        'testIndexSignal,
        'testInstant,
        'testManySignal,
-       'testMapEnd
+       'testMapEnd,
+       'testInners
      ]
  )
 

@@ -39,8 +39,7 @@ capabilities = render anim
         <> inner (partsOf (ixs [4, 7] . x)) (fn (\[a, b] -> ky [b, a] 1))
         <> key (ixs [4, 7] . y) 0 1
         <> mapEnd (sortOn (view x))
-        <> key (traverse . color) white 0.5
-        <> inners (traverse . y) [delay (i * 0.05) <> ky (-90) 0.2 <> ky 0 0.2 | i <- [0 .. 10]]
+        <> inners (traverse . y) [delay (i * 0.05) <> ky (-90) 0.2 <> ky 0 0.2 | i <- [0 ..]]
 
 sort :: IO ()
 sort = render anim
@@ -71,5 +70,5 @@ sort = render anim
           |> sort
           <> delay 0.2
           <> key (traverse . _1 . color) itemColor 0.6
-          <> inners (traverse . y) [delay (i * 0.05) <> ky (-90) 0.2 <> ky 0 0.2 | i <- [0 .. 10]]
+          <> inners (traverse . y) [delay (i * 0.05) <> ky (-90) 0.2 <> ky 0 0.2 | i <- [0 ..]]
           <> delay 1

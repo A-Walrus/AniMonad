@@ -30,6 +30,7 @@ where
 
 import Control.Exception (assert)
 import Control.Lens hiding ((|>))
+import Control.Monad (zipWithM)
 
 type Time = Float
 
@@ -110,7 +111,7 @@ innerFn t x = inner t (fn x)
 inners :: Traversal' a b -> [Chain b] -> Chain a
 inners trav cbs = inner (partsOf trav) (chain thing)
   where
-    thing vals = sequenceA [asFn cb val | val <- vals, cb <- cbs]
+    thing = zipWithM asFn cbs
 
 simul :: [Time -> Chain a] -> Time -> Chain a
 simul l time = keys (map ($ time) l)
