@@ -26,9 +26,11 @@ passToRenderer items = do
   let cmd = "svg-render/target/release/svg-render"
       args = [show fps, show (length items), show docWidth, show docHeight]
       process = (proc cmd args) {std_in = CreatePipe, std_out = Inherit, std_err = Inherit}
-  (Just hin, _, _, _) <- createProcess process
+  (Just hin, _, _, ph) <- createProcess process
   mapM_ (hPutStrLn hin . ('\n' :)) items
   hClose hin
+  _ <- waitForProcess ph
+  return ()
 
 render :: (Element e) => Signal e -> IO ()
 render anim = passToRenderer (frames (show . svgDoc . draw <$> anim))
