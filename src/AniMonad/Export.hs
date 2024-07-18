@@ -7,6 +7,7 @@ import AniMonad.Element.Base
 import Lucid.Svg
 import System.IO (hClose, hPutStrLn)
 import System.Process
+import Data.List (intercalate)
 
 docWidth, docHeight :: Int
 docWidth = 1024
@@ -27,7 +28,7 @@ passToRenderer items = do
       args = [show fps, show (length items), show docWidth, show docHeight]
       process = (proc cmd args) {std_in = CreatePipe, std_out = Inherit, std_err = Inherit}
   (Just hin, _, _, ph) <- createProcess process
-  mapM_ (hPutStrLn hin . ('\n' :)) items
+  hPutStrLn hin (intercalate "\n\n" items)
   hClose hin
   _ <- waitForProcess ph
   return ()

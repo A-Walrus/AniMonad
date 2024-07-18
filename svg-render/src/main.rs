@@ -73,7 +73,6 @@ fn main() {
         .expect("Failed to read from STDIN");
 
     buffer
-        .trim()
         .split("\n\n")
         .enumerate()
         .par_bridge()
