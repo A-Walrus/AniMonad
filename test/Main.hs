@@ -35,7 +35,6 @@ testTimings =
   test
     [ end l ~=? 1,
       end (extend (3 * fps) l) ~=? 1
-      -- same (stretchTo 5 l) (stretchBy 5 l)
     ]
   where
     l = 0 |> ky 1 1 :: Signal Float
