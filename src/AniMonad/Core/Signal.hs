@@ -1,9 +1,9 @@
+{-# LANGUAGE ImplicitParams #-}
 {-# LANGUAGE MonoLocalBinds #-}
 
 module AniMonad.Core.Signal
   ( Time,
     Signal (Signal),
-    fps,
     frameTime,
     frames,
     end,
@@ -28,6 +28,7 @@ module AniMonad.Core.Signal
   )
 where
 
+import AniMonad.Config
 import Control.Exception (assert)
 import Control.Lens hiding ((|>))
 import Control.Monad (zipWithM)
@@ -36,18 +37,15 @@ type Time = Float
 
 type Duration = Int
 
-toDur :: Time -> Duration
-toDur t = round (t * fromIntegral fps)
+toDur :: (?config :: Config) => Time -> Duration
+toDur t = round (t * fromIntegral (fps ?config))
 
-fps :: Int
-fps = 24
-
-frameTime :: Time
-frameTime = 1 / fromIntegral fps
+frameTime :: (?config :: Config) => Time
+frameTime = 1 / fromIntegral (fps ?config)
 
 newtype Signal a = Signal [a] deriving (Show, Eq)
 
-sample :: Time -> (Time -> a) -> Signal a
+sample :: (?config :: Config) => Time -> (Time -> a) -> Signal a
 sample time f = Signal $ map f [0, frameTime .. time]
 
 frames :: Signal a -> [a]
@@ -130,7 +128,7 @@ signal = chain . const
 fn :: (a -> Chain a) -> Chain a
 fn f = chain (\x -> asFn (f x) x)
 
-delay :: Time -> Chain a
+delay :: (?config :: Config) => Time -> Chain a
 delay t = chain (Signal . replicate (1 + toDur t))
 
 mapEnd :: (a -> a) -> Chain a

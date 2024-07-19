@@ -1,3 +1,4 @@
+{-# LANGUAGE ImplicitParams #-}
 {-# OPTIONS_GHC -Wno-incomplete-uni-patterns #-}
 {-# OPTIONS_GHC -Wno-missing-signatures #-}
 {-# OPTIONS_GHC -Wno-name-shadowing #-}
@@ -8,16 +9,10 @@ import AniMonad
 import Data.Foldable (fold)
 import Data.List (sortOn)
 
-itemColor = sRGB24read "#95a5a6"
-
-disabledColor = sRGB24read "#424949"
-
-bgColor = sRGB24read "#66646C"
-
 main :: IO ()
-main = sort
+main = let ?config = (Config 1024 1024 60) in sort
 
-simple :: IO ()
+simple :: (?config :: Config) => IO ()
 simple = render anim
   where
     anim =
@@ -27,7 +22,7 @@ simple = render anim
         <> inner radius (signal ((* 100) . (+ 1) <$> sample (2 * pi) cos))
         <> delay 1
 
-capabilities :: IO ()
+capabilities :: (?config :: Config) => IO ()
 capabilities = render anim
   where
     base = [at (V2 (x * 80) 0) (Rect 60 60 white 10) | x <- [-5 .. 5]]
@@ -41,7 +36,13 @@ capabilities = render anim
         <> mapEnd (sortOn (view x))
         <> inners (traverse . y) [delay (i * 0.05) <> ky (-90) 0.2 <> ky 0 0.2 | i <- [0 ..]]
 
-sort :: IO ()
+itemColor = sRGB24read "#95a5a6"
+
+disabledColor = sRGB24read "#424949"
+
+bgColor = sRGB24read "#66646C"
+
+sort :: (?config :: Config) => IO ()
 sort = render anim
   where
     background = Rect 1024 1024 bgColor 0
