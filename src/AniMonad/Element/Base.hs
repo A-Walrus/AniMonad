@@ -8,6 +8,8 @@ module AniMonad.Element.Base
     Vec2,
     Color,
     BoundingBox (BoundingBox),
+    SomeElem (SomeElem),
+    as,
     boxWidth,
     boxHeight,
     Transformed,
@@ -33,6 +35,7 @@ import Control.Lens.Combinators (lens)
 import Data.Colour (Colour)
 import Data.Colour.Names
 import Data.Colour.SRGB (sRGB24read, sRGB24show)
+import Data.Data (Typeable, cast)
 import Data.List (intercalate)
 import Data.Text (Text, pack)
 import Linear (V2 (V2), V3 (V3), (!*!))
@@ -52,8 +55,8 @@ showColor = pack . sRGB24show
 class Element a where
   draw :: a -> Svg ()
   box :: a -> BoundingBox
-  realize :: a -> SomeElement
-  realize = SomeElement
+  realize :: a -> SomeElem
+  realize = undefined
   draw = draw . realize
   box = box . realize
 
@@ -65,12 +68,23 @@ boxWidth (BoundingBox (V2 a _) (V2 b _)) = b - a
 boxHeight :: BoundingBox -> Float
 boxHeight (BoundingBox (V2 _ a) (V2 _ b)) = b - a
 
-data SomeElement where
-  SomeElement :: (Element a) => a -> SomeElement
+data SomeElem where
+  SomeElem :: (Element a, Typeable a) => a -> SomeElem
 
-instance Element SomeElement where
-  draw (SomeElement e) = draw e
-  box (SomeElement e) = box e
+instance Element SomeElem where
+  draw (SomeElem e) = draw e
+  box (SomeElem e) = box e
+
+castElem :: forall a. (Element a, Typeable a) => SomeElem -> Maybe a
+castElem (SomeElem a) = cast a
+
+as :: forall a. (Element a, Typeable a) => Lens' SomeElem a
+as = lens v o
+  where
+    v s = case castElem s of
+      Just x -> x
+      Nothing -> error "`as` cast failed. Element is of incorrect type."
+    o _ = SomeElem
 
 combine :: BoundingBox -> BoundingBox -> BoundingBox
 combine (BoundingBox (V2 ax1 ay1) (V2 ax2 ay2)) (BoundingBox (V2 bx1 by1) (V2 bx2 by2)) = BoundingBox (V2 (min ax1 bx1) (min ay1 by1)) (V2 (max ax2 bx2) (max ay2 by2))

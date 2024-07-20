@@ -1,4 +1,5 @@
 {-# LANGUAGE ImplicitParams #-}
+{-# LANGUAGE TypeApplications #-}
 {-# OPTIONS_GHC -Wno-incomplete-uni-patterns #-}
 {-# OPTIONS_GHC -Wno-missing-signatures #-}
 {-# OPTIONS_GHC -Wno-name-shadowing #-}
@@ -15,8 +16,15 @@ main = let ?config = Config 1024 1024 60 in layout
 layout :: (?config :: Config) => IO ()
 layout = render anim
   where
-    base = replicate 5 (Rect 100 100 white 20)
-    anim = row 20 <$> base |> key (ix 1 . width) 400 1 <> simul [key (ix 2 . width) 50, key (ix 2 . color) blue] 1 <> inner (ixs [3, 4] . height) (ky 150 1 <> ky 80 1)
+    r = Rect 100 100 white 20
+    c = Circle 75 blue
+    base = [SomeElem r, SomeElem r, SomeElem c, SomeElem r]
+    anim =
+      row 20
+        <$> base
+          |> inner (ix 2 . (as @Circle) . radius) (ky 25 1 <> ky 100 1)
+          <> key (ix 1 . (as @Rect) . color) tomato 1
+          <> key (ix 1 . (as @Rect) . width) 200 1
 
 simple :: (?config :: Config) => IO ()
 simple = render anim
