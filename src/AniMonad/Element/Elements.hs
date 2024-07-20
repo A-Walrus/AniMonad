@@ -57,5 +57,4 @@ $(makeElementLenses ''Text)
 
 instance (Show a) => Element (Text a) where
   draw (Text {_str, _fontSize, _color}) = text_ [font_size_ (showT _fontSize), fill_ (showColor _color), font_family_ "monospace", text_anchor_ "middle", dominant_baseline_ "central"] (toHtml (pack (show _str))) -- TODO font family, anchor
-  box = undefined -- TODO
-
+  box _ = BoundingBox (V2 0 0) (V2 0 0) -- TODO

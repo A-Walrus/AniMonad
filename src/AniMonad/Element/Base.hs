@@ -8,6 +8,8 @@ module AniMonad.Element.Base
     Vec2,
     Color,
     BoundingBox (BoundingBox),
+    boxWidth,
+    boxHeight,
     Transformed,
     Element (box, draw),
     showColor,
@@ -51,7 +53,13 @@ class Element a where
   draw :: a -> Svg ()
   box :: a -> BoundingBox
 
-data BoundingBox = BoundingBox Vec2 Vec2
+data BoundingBox = BoundingBox Vec2 Vec2 deriving (Show)
+
+boxWidth :: BoundingBox -> Float
+boxWidth (BoundingBox (V2 a _) (V2 b _)) = b - a
+
+boxHeight :: BoundingBox -> Float
+boxHeight (BoundingBox (V2 _ a) (V2 _ b)) = b - a
 
 combine :: BoundingBox -> BoundingBox -> BoundingBox
 combine (BoundingBox (V2 ax1 ay1) (V2 ax2 ay2)) (BoundingBox (V2 bx1 by1) (V2 bx2 by2)) = BoundingBox (V2 (min ax1 bx1) (min ay1 by1)) (V2 (max ax2 bx2) (max ay2 by2))
@@ -80,7 +88,7 @@ asMat (Transform {_position, _rotation, _scale}) = scaleMat _scale !*! translati
 data Transformed a = (Element a) => Transformed {_transform :: Transform, _val :: a}
 
 instance (Show a) => Show (Transformed a) where
-  show (Transformed t v) = "Transformed " ++ show t ++" "++ show v
+  show (Transformed t v) = "Transformed " ++ show t ++ " " ++ show v
 
 val :: Lens' (Transformed a) a
 val = lens (\(Transformed _ a) -> a) (\(Transformed t _) a -> Transformed t a)

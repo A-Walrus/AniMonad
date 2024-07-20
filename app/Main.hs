@@ -64,7 +64,7 @@ sort = render anim
     times = 0.5 : map (max 0.2 . (* 0.9)) times
     sort = fold (zipWith sortPass [(len - 2), (len - 3) .. (-1)] times)
     sortPass i t = foldMap (\b -> try_swap b (b + 1) t) [0 .. i] <> key (ix (i + 1) . _1 . color) disabledColor t
-    base = zipWith (\i v -> at (V2 ((i - (fromIntegral (length values - 1) / 2)) * 140) 0) (Rect 120 120 itemColor 25, Text v 40 white)) [0 ..] values
+    base = row 20 [(Rect 120 120 itemColor 24, Text val 40 white) | val <- values]
     anim =
       (,) background
         <$> base
