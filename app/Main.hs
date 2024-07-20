@@ -10,7 +10,7 @@ import Data.Foldable (fold)
 import Data.List (sortOn)
 
 main :: IO ()
-main = let ?config = (Config 1024 1024 60) in sort
+main = let ?config = Config 1024 1024 60 in sort
 
 simple :: (?config :: Config) => IO ()
 simple = render anim

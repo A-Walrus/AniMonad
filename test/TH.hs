@@ -12,4 +12,12 @@ testAll testNames = do
       testList = ListE tests
       funBody = NormalB (AppE (VarE 'test) testList)
       funClause = Clause [] funBody []
-  return [SigD testListName (ConT ''Test), FunD testListName [funClause]]
+  typ <- getFunctionSignature (head testNames)
+  return [SigD testListName typ, FunD testListName [funClause]]
+
+getFunctionSignature :: Name -> Q Type
+getFunctionSignature name = do
+  info <- reify name
+  case info of
+    VarI _ typ _ -> return typ
+    _ -> fail "Not a function name"
