@@ -18,17 +18,17 @@ anim =
 ```
 
 ### Layout & Casting
-https://github.com/user-attachments/assets/78064a41-cf35-4805-ba98-831244ac19b6
+https://github.com/user-attachments/assets/51d1da5c-c984-46dd-8236-08a40c88f371
 ```haskell
-r = Rect 100 100 white 10
-c = Circle 75 blue
-base = [SomeElem r, SomeElem r, SomeElem c, SomeElem r]
-anim =
-  row 20
-    <$> base
-      |> key (ix 0 . (as @Rect) . width) 200 1
-      <> inner (ix 2 . (as @Circle) . radius) (ky 25 1 <> ky 100 1)
-      <> inner (ix 1 . (as @Rect)) (key color tomato 1 <> simul [key height 200, key width 50] 1)
+  r = Rect 100 100 white 10
+  c = Circle 75 blue
+  base = [SomeElem r, SomeElem (at (V2 0 0) r), SomeElem r, SomeElem c, SomeElem r]
+  anim =
+    row 20
+      <$> base
+        |> key (ix 0 . (as @Rect) . width) 200 1
+        <> inner (ix 3 . (as @Circle) . radius) (ky 25 1 <> ky 100 1)
+        <> inner (ix 1 . (as @(Transformed Rect))) (key color tomato 1 <> key rotation 90 1)
 ```
 
 ### Bubble Sort
