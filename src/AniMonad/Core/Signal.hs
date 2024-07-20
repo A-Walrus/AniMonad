@@ -1,6 +1,3 @@
-{-# LANGUAGE ImplicitParams #-}
-{-# LANGUAGE MonoLocalBinds #-}
-
 module AniMonad.Core.Signal
   ( Time,
     Signal (Signal),

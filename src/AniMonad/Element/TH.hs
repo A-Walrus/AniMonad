@@ -1,5 +1,3 @@
-{-# LANGUAGE TemplateHaskellQuotes #-}
-
 module AniMonad.Element.TH
   ( genElementInstances,
     makeElementLenses,

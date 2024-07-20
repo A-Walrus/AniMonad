@@ -1,6 +1,3 @@
-{-# LANGUAGE ImplicitParams #-}
-{-# LANGUAGE OverloadedStrings #-}
-
 module AniMonad.Export (render) where
 
 import AniMonad.Config

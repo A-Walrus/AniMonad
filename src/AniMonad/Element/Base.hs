@@ -1,4 +1,3 @@
-{-# LANGUAGE TemplateHaskell #-}
 {-# OPTIONS_GHC -Wno-name-shadowing #-}
 
 module AniMonad.Element.Base

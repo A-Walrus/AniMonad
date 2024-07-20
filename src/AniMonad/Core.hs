@@ -1,5 +1,3 @@
-{-# LANGUAGE MonoLocalBinds #-}
-
 module AniMonad.Core
   ( module AniMonad.Core.LensExt,
     module AniMonad.Core.Lerp,

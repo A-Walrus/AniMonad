@@ -1,6 +1,3 @@
-{-# LANGUAGE ImplicitParams #-}
-{-# LANGUAGE MonoLocalBinds #-}
-
 module AniMonad.Core.Keys where
 
 import AniMonad.Config

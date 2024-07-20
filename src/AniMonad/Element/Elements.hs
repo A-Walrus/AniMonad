@@ -1,8 +1,3 @@
-{-# LANGUAGE DuplicateRecordFields #-}
-{-# LANGUAGE FunctionalDependencies #-}
-{-# LANGUAGE MonoLocalBinds #-}
-{-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE TemplateHaskell #-}
 {-# OPTIONS_GHC -Wno-orphans #-}
 
 module AniMonad.Element.Elements where
@@ -10,14 +5,13 @@ module AniMonad.Element.Elements where
 import AniMonad.Element.Base
 import AniMonad.Element.TH
 import Control.Lens.Combinators
-import Data.Data (Typeable)
 import Data.Text (pack)
 import Lucid.Svg
 
 $(genElementInstances 8) -- Element tuples
 $(genTransformTuples 8) -- Element tuples
 
-data Rect = Rect {_width, _height :: Float, _color :: Color, _cornerRadius :: Float} deriving (Show, Typeable)
+data Rect = Rect {_width, _height :: Float, _color :: Color, _cornerRadius :: Float} deriving (Show)
 
 $(makeElementLenses ''Rect)
 
@@ -34,7 +28,7 @@ instance Element Rect where
     where
       (w2, h2) = (w / 2, h / 2)
 
-data Circle = Circle {_radius :: Float, _color :: Color} deriving (Show, Typeable)
+data Circle = Circle {_radius :: Float, _color :: Color} deriving (Show)
 
 $(makeElementLenses ''Circle)
 
@@ -49,7 +43,7 @@ data Text a = Text
     _fontSize :: Float, -- TODO custom size type?
     _color :: Color
   }
-  deriving (Show, Typeable)
+  deriving (Show)
 
 $(makeElementLenses ''Text)
 

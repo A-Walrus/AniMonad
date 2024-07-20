@@ -26,6 +26,13 @@ library
         AniMonad.Config
 
     default-language: GHC2021
+    default-extensions:
+        ImplicitParams
+        TemplateHaskell
+        OverloadedStrings
+        MonoLocalBinds
+        FunctionalDependencies
+        DuplicateRecordFields
     ghc-options:      -Wall
     build-depends:
         base ^>=4.17.2.1,
@@ -56,6 +63,10 @@ test-suite animonad-test
     other-modules:    TH
     default-language: GHC2021
     ghc-options:      -Wall
+    default-extensions:
+        ImplicitParams
+        TemplateHaskell
+        DataKinds
     build-depends:
         base ^>=4.17.2.1,
         HUnit ^>=1.6,

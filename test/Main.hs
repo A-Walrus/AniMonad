@@ -1,7 +1,3 @@
-{-# LANGUAGE ImplicitParams #-}
-{-# LANGUAGE TemplateHaskell #-}
-{-# LANGUAGE DataKinds #-}
-
 module Main (main) where
 
 import AniMonad
