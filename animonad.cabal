@@ -21,6 +21,7 @@ library
         AniMonad.Element.Base
         AniMonad.Element.Elements
         AniMonad.Element.TH
+        AniMonad.Element.Layout
         AniMonad.Export
         AniMonad.Config
 

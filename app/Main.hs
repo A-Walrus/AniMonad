@@ -16,7 +16,7 @@ layout :: (?config :: Config) => IO ()
 layout = render anim
   where
     base = replicate 5 (Rect 100 100 white 20)
-    anim = row 20 <$> base |> key (ix 1 . width) 400 1 <> key (ix 2 . width) 50 1 <> inner (ixs [3, 4] . height) (ky 150 1 <> ky 80 1)
+    anim = row 20 <$> base |> key (ix 1 . width) 400 1 <> simul [key (ix 2 . width) 50, key (ix 2 . color) blue] 1 <> inner (ixs [3, 4] . height) (ky 150 1 <> ky 80 1)
 
 simple :: (?config :: Config) => IO ()
 simple = render anim
