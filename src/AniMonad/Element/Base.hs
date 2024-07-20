@@ -67,6 +67,12 @@ boxWidth (BoundingBox (V2 a _) (V2 b _)) = b - a
 boxHeight :: BoundingBox -> Float
 boxHeight (BoundingBox (V2 _ a) (V2 _ b)) = b - a
 
+corners :: BoundingBox -> [Vec2]
+corners (BoundingBox min@(V2 a b) max@(V2 c d)) = [min, V2 a d, max, V2 c b]
+
+point :: Vec2 -> BoundingBox
+point v = BoundingBox v v
+
 data SomeElem where
   SomeElem :: (Element a, Typeable a) => a -> SomeElem
 
@@ -86,7 +92,10 @@ as = lens v o
     o _ = SomeElem
 
 combine :: BoundingBox -> BoundingBox -> BoundingBox
-combine (BoundingBox (V2 ax1 ay1) (V2 ax2 ay2)) (BoundingBox (V2 bx1 by1) (V2 bx2 by2)) = BoundingBox (V2 (min ax1 bx1) (min ay1 by1)) (V2 (max ax2 bx2) (max ay2 by2))
+combine box (BoundingBox a b) = grow (grow box a) b
+
+grow :: BoundingBox -> Vec2 -> BoundingBox
+grow (BoundingBox (V2 ax1 ay1) (V2 ax2 ay2)) (V2 bx by) = BoundingBox (V2 (min ax1 bx) (min ay1 by)) (V2 (max ax2 bx) (max ay2 by))
 
 data Transform = Transform {_position :: Vec2, _rotation :: Float, _scale :: Vec2} deriving (Show)
 
@@ -185,6 +194,6 @@ instance Element (Transformed a) where
     where
       V3 (V3 a c e) (V3 b d f) _ = asMat txform
       transformT = pack $ "matrix(" ++ intercalate "," (map show [a, b, c, d, e, f]) ++ ")"
-  box (Transformed txform element) = BoundingBox (project txform min) (project txform max)
+  box (Transformed txform element) = foldl grow (point (head newCorners)) newCorners
     where
-      (BoundingBox min max) = box element
+      newCorners = map (project txform) $ corners $ box element
