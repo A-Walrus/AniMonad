@@ -11,7 +11,7 @@ module AniMonad.Element.Base
     boxWidth,
     boxHeight,
     Transformed,
-    Element (box, draw),
+    Element (box, draw, realize),
     showColor,
     val,
     combine,
@@ -52,6 +52,10 @@ showColor = pack . sRGB24show
 class Element a where
   draw :: a -> Svg ()
   box :: a -> BoundingBox
+  realize :: a -> SomeElement
+  realize = SomeElement
+  draw = draw . realize
+  box = box . realize
 
 data BoundingBox = BoundingBox Vec2 Vec2 deriving (Show)
 
@@ -60,6 +64,13 @@ boxWidth (BoundingBox (V2 a _) (V2 b _)) = b - a
 
 boxHeight :: BoundingBox -> Float
 boxHeight (BoundingBox (V2 _ a) (V2 _ b)) = b - a
+
+data SomeElement where
+  SomeElement :: (Element a) => a -> SomeElement
+
+instance Element SomeElement where
+  draw (SomeElement e) = draw e
+  box (SomeElement e) = box e
 
 combine :: BoundingBox -> BoundingBox -> BoundingBox
 combine (BoundingBox (V2 ax1 ay1) (V2 ax2 ay2)) (BoundingBox (V2 bx1 by1) (V2 bx2 by2)) = BoundingBox (V2 (min ax1 bx1) (min ay1 by1)) (V2 (max ax2 bx2) (max ay2 by2))

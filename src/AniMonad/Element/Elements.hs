@@ -16,9 +16,6 @@ import Lucid.Svg
 $(genElementInstances 8) -- Element tuples
 $(genTransformTuples 8) -- Element tuples
 
-data SomeElement where
-  SomeElement :: (Element a) => a -> SomeElement
-
 data Rect = Rect {_width, _height :: Float, _color :: Color, _cornerRadius :: Float} deriving (Show)
 
 $(makeElementLenses ''Rect)
