@@ -18,6 +18,7 @@ anim =
 ```
 
 ### Layout & Casting
+https://github.com/user-attachments/assets/78064a41-cf35-4805-ba98-831244ac19b6
 ```haskell
 r = Rect 100 100 white 10
 c = Circle 75 blue
