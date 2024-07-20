@@ -17,19 +17,17 @@ anim =
     <> delay 1
 ```
 
-### Less simple
-https://github.com/A-Walrus/AniMonad/assets/58790821/a6d2a643-a9f8-4764-bdb8-3ea5461da802
+### Layout & Casting
 ```haskell
-base = [at (V2 (x * 80) 0) (Rect 60 60 white 10) | x <- [-5 .. 5]]
+r = Rect 100 100 white 10
+c = Circle 75 blue
+base = [SomeElem r, SomeElem r, SomeElem c, SomeElem r]
 anim =
-  base
-    |> simul [key (ix 4 . color) blue, key (ix 7 . color) red] 0.5
-    <> inner (ix 0 . color) (ky yellow 0.5 <> ky limegreen 0.5)
-    <> key (ixs [4, 7] . y) (-80) 1
-    <> inner (partsOf (ixs [4, 7] . x)) (fn (\[a, b] -> ky [b, a] 1))
-    <> key (ixs [4, 7] . y) 0 1
-    <> mapEnd (sortOn (view x))
-    <> inners (traverse . y) [delay (i * 0.05) <> ky (-90) 0.2 <> ky 0 0.2 | i <- [0 ..]]
+  row 20
+    <$> base
+      |> key (ix 0 . (as @Rect) . width) 200 1
+      <> inner (ix 2 . (as @Circle) . radius) (ky 25 1 <> ky 100 1)
+      <> inner (ix 1 . (as @Rect)) (key color tomato 1 <> simul [key height 200, key width 50] 1)
 ```
 
 ### Bubble Sort
@@ -54,7 +52,7 @@ try_swap a b t =
 times = 0.5 : map (max 0.2 . (* 0.9)) times
 sort = fold (zipWith sortPass [(len - 2), (len - 3) .. (-1)] times)
 sortPass i t = foldMap (\b -> try_swap b (b + 1) t) [0 .. i] <> key (ix (i + 1) . _1 . color) disabledColor t
-base = zipWith (\i v -> at (V2 ((i - (fromIntegral (length values - 1) / 2)) * 140) 0) (Rect 120 120 itemColor 25, Text v 40 white)) [0 ..] values
+base = row 20 [(Rect 120 120 itemColor 24, Text val 40 white) | val <- values]
 anim =
   (,) background
     <$> base
