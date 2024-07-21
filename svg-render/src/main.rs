@@ -3,8 +3,9 @@ use std::{
     process::{Command, Stdio},
     sync::mpsc::channel,
     thread,
+    iter::once,
 };
-
+use itertools::Itertools;
 use rayon::prelude::*;
 fn main() {
     let args: Vec<String> = std::env::args().collect();
@@ -72,13 +73,13 @@ fn main() {
         .read_to_string(&mut buffer)
         .expect("Failed to read from STDIN");
 
-    buffer
-        .split("\n\n")
-        .enumerate()
+    let x = buffer.match_indices("<?xml").map(|(i,_)| i).chain(once(buffer.len()));
+
+    x.tuple_windows().enumerate()
         .par_bridge()
-        .into_par_iter()
-        .for_each(|(i, svg)| {
-            let tree = usvg::Tree::from_data(svg.as_bytes(), &opt).expect("Failed to parse SVG");
+        .for_each(|(i, (start,end))|{
+            let svg:&str = &buffer[start..end];
+            let tree = usvg::Tree::from_data(svg.as_bytes(), &opt).expect(&format!("{svg}"));
 
             let pixmap_size = tree.size().to_int_size();
             let mut pixmap =
