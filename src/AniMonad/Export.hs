@@ -3,7 +3,6 @@ module AniMonad.Export (render) where
 import AniMonad.Config
 import AniMonad.Core
 import AniMonad.Element.Base
-import Data.List (intercalate)
 import Lucid.Svg
 import System.IO (hClose, hPutStrLn)
 import System.Process
