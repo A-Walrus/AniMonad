@@ -25,7 +25,7 @@ passToRenderer items = do
       args = [show (fps ?config), show (length items), show (docWidth ?config), show (docHeight ?config)]
       process = (proc cmd args) {std_in = CreatePipe, std_out = Inherit, std_err = Inherit}
   (Just hin, _, _, ph) <- createProcess process
-  hPutStrLn hin (intercalate "\n\n" items)
+  hPutStrLn hin (concat items)
   hClose hin
   _ <- waitForProcess ph
   return ()
