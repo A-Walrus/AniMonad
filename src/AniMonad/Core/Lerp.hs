@@ -3,7 +3,9 @@ module AniMonad.Core.Lerp where
 import AniMonad.Core.Signal (Time)
 import AniMonad.Element.Base (Color, Vec2)
 import Data.Colour (blend)
+import Linear ((^+^), Additive)
 import Linear qualified
+
 
 class Lerp a where
   lerp :: a -> a -> Time -> a
@@ -22,3 +24,15 @@ instance Lerp Vec2 where
 
 instance (Lerp a) => Lerp [a] where
   lerp as bs t = zipWith (\a b -> lerp a b t) as bs
+
+class Offset a where
+    offset :: a -> a -> a
+
+instance (Num a) => Offset a where
+    offset=(+)
+
+{-instance (Additive a, Num b) => Offset (a b) where
+      offset=(^+^)-}
+
+instance (Offset a) => Offset [a] where
+  offset a b = zipWith offset a b

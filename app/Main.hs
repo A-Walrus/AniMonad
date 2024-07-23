@@ -11,7 +11,24 @@ import Data.Foldable (fold)
 import Data.List (sortOn)
 
 main :: IO ()
-main = let ?config = Config 1024 1024 60 in layout
+main = let ?config = Config 1024 1024 60 in squareDance
+
+squareDance :: (?config :: Config) => IO ()
+squareDance = render anim
+    where
+    {-
+      base = row 10 [Rect 100 100 blue 10, Rect 100 100 magenta 10]
+      colorCh = simul [key (ix 0 . color) magenta, key (ix 1 . color) blue] 3
+      move =
+        simul [keyR (ix 0 . y) 55, keyR (ix 1 . y) (-55)] 1
+        <> simul [keyR (ix 0 . x) 110, keyR (ix 1 . x) (-110)] 1
+        <> simul [keyR (ix 0 . y) (-55), keyR (ix 1 . y) 55] 1
+        <> mapEnd (\[a,b] -> [b,a])
+        -}
+
+      anim = Circle 100 white |> key color red 1 <> key radius 50 1
+      -- anim = base |> simul [key (ix 0 . color) yellow , key (ix 0 . x) 500 ] 5
+
 
 simple :: (?config :: Config) => IO ()
 simple = render anim

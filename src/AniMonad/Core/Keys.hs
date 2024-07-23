@@ -18,3 +18,16 @@ ky = key id
 
 ky' :: (?config :: Config, Lerp a) => a -> Ease Float -> Time -> Chain a
 ky' = key' id
+
+keyR' :: (?config :: Config, Lerp b, Offset b) => Traversal' a b -> b -> Ease Float -> Time -> Chain a
+keyR' trav offset' _ 0 = inner trav (chain (\start -> pure (offset start offset')))
+keyR' trav offset' easing time = inner trav (chain (\start -> sample time (lerp start (offset start offset') . easing . (/ time))))
+
+keyR :: (?config :: Config, Lerp b, Offset b) => Traversal' a b -> b -> Time -> Chain a
+keyR trav offset' = keyR' trav offset' cubicInOut
+
+kyR' :: (?config :: Config, Lerp a, Offset a) => a -> Ease Float -> Time -> Chain a
+kyR' = keyR' id
+
+kyR :: (?config :: Config, Lerp a, Offset a) => a -> Time -> Chain a
+kyR = keyR id

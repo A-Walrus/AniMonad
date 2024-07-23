@@ -9,8 +9,8 @@ build-type:      Simple
 extra-doc-files: CHANGELOG.md
 
 library
-    exposed-modules:  AniMonad
-    hs-source-dirs:   src
+    exposed-modules:    AniMonad
+    hs-source-dirs:     src
     other-modules:
         AniMonad.Core
         AniMonad.Core.LensExt
@@ -25,15 +25,12 @@ library
         AniMonad.Export
         AniMonad.Config
 
-    default-language: GHC2021
+    default-language:   GHC2021
     default-extensions:
-        ImplicitParams
-        TemplateHaskell
-        OverloadedStrings
-        MonoLocalBinds
-        FunctionalDependencies
-        DuplicateRecordFields
-    ghc-options:      -Wall
+        ImplicitParams TemplateHaskell OverloadedStrings MonoLocalBinds
+        FunctionalDependencies DuplicateRecordFields UndecidableInstances
+
+    ghc-options:        -Wall
     build-depends:
         base ^>=4.17.2.1,
         lens ^>=5.3.2,
@@ -57,16 +54,13 @@ executable animonad
         animonad
 
 test-suite animonad-test
-    type:             exitcode-stdio-1.0
-    main-is:          Main.hs
-    hs-source-dirs:   test
-    other-modules:    TH
-    default-language: GHC2021
-    ghc-options:      -Wall
-    default-extensions:
-        ImplicitParams
-        TemplateHaskell
-        DataKinds
+    type:               exitcode-stdio-1.0
+    main-is:            Main.hs
+    hs-source-dirs:     test
+    other-modules:      TH
+    default-language:   GHC2021
+    default-extensions: ImplicitParams TemplateHaskell DataKinds
+    ghc-options:        -Wall
     build-depends:
         base ^>=4.17.2.1,
         HUnit ^>=1.6,
