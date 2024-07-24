@@ -2,3 +2,4 @@ dist-newstyle/
 frames/
 *.mp4
 */target/
+.idea/
