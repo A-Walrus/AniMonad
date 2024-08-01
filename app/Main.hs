@@ -9,9 +9,10 @@ module Main where
 import AniMonad
 import Data.Foldable (fold)
 import Data.List (sortOn)
+import Text.Printf
 
 main :: IO ()
-main = let ?config = Config 1024 1024 60 in layout
+main = let ?config = Config 1024 1024 60 in geometry
 
 simple :: (?config :: Config) => IO ()
 simple = render anim
@@ -22,6 +23,13 @@ simple = render anim
         <> key radius 200 0.5
         <> inner radius (signal ((* 100) . (+ 1) <$> sample (2 * pi) cos))
         <> delay 1
+
+geometry :: (?config :: Config) => IO ()
+geometry = render anim
+  where
+    rad = 100 |> ky 200 1 <> ky 100 1
+    base = pure (Circle 0 red, Text "" 40 white)
+    anim = sigSet (_2 . str) (printf "%.1f"  <$> rad) . sigSet (_1 . radius) rad $ base
 
 layout :: (?config :: Config) => IO ()
 layout = render anim

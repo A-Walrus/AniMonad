@@ -22,6 +22,7 @@ module AniMonad.Core.Signal
     sample,
     duration,
     sigLens,
+    sigSet,
   )
 where
 
@@ -75,6 +76,9 @@ extend :: Int -> Signal a -> Signal a
 extend new_dur s = s <> Signal (replicate missing_frames (end s))
   where
     missing_frames = new_dur - duration s + 1
+
+sigSet ::  Traversal' a b -> Signal b -> Signal a -> Signal a
+sigSet trav  small = set (sigLens trav) small
 
 sigLens :: Traversal' a b -> Traversal' (Signal a) (Signal b)
 sigLens field = traversal f
