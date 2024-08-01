@@ -12,7 +12,19 @@ import Data.List (sortOn)
 import Text.Printf
 
 main :: IO ()
-main = let ?config = Config 1024 1024 60 in simple
+main = let ?config = Config 1024 1024 60 in tricky
+
+tricky :: (?config :: Config) => IO ()
+tricky = render anim
+  where
+    base = row 20 [Rect 100 100 blue 10, Rect 100 100 red 10]
+    movement =
+      simul [key (ix 0 . y) 60, key (ix 1 . y) (-60)] 1
+        <> simul [key (ix 0 . x) 60, key (ix 1 . x) (-60)] 1
+        <> key (ixs [0, 1] . y) 0 1
+
+    colors = simul [key (ix 0 . color) red, key (ix 1 . color) blue] 1
+    anim = base |> keys [colors, movement]
 
 simple :: (?config :: Config) => IO ()
 simple = render anim
