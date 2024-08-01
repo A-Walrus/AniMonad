@@ -12,7 +12,7 @@ import Data.List (sortOn)
 import Text.Printf
 
 main :: IO ()
-main = let ?config = Config 1024 1024 60 in geometry
+main = let ?config = Config 1024 1024 60 in simple
 
 simple :: (?config :: Config) => IO ()
 simple = render anim
@@ -20,7 +20,7 @@ simple = render anim
     anim =
       Circle 100 white
         |> key color blue 2
-        <> key radius 200 0.5
+        <> keyFn radius (* 2) 0.5
         <> inner radius (signal ((* 100) . (+ 1) <$> sample (2 * pi) cos))
         <> delay 1
 
@@ -29,7 +29,7 @@ geometry = render anim
   where
     rad = 100 |> ky 200 1 <> ky 100 1
     base = pure (Circle 0 red, Text "" 40 white)
-    anim = sigSet (_2 . str) (printf "%.1f"  <$> rad) . sigSet (_1 . radius) rad $ base
+    anim = sigSet (_2 . str) (printf "%.1f" <$> rad) . sigSet (_1 . radius) rad $ base
 
 layout :: (?config :: Config) => IO ()
 layout = render anim

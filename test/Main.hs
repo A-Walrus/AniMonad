@@ -68,6 +68,9 @@ testDelay = same (zero |> delay (2 * frameTime)) (0 |> delay frameTime <> delay 
 testInners :: (?config :: Config) => Test
 testInners = same ([one, 2] |> ky [3, 4] 1) ([1, 2] |> inners traverse [ky 3 1, ky 4 1])
 
+testKeyFn :: (?config :: Config) => Test
+testKeyFn = same (one |> ky 2 1) (one |> kyFn (* 2) 1)
+
 $( testAll
      [ 'testDelay,
        'testSigLens,
@@ -77,7 +80,8 @@ $( testAll
        'testInstant,
        'testManySignal,
        'testMapEnd,
-       'testInners
+       'testInners,
+       'testKeyFn
      ]
  )
 
