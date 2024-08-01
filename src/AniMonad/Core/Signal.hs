@@ -23,6 +23,7 @@ module AniMonad.Core.Signal
     duration,
     sigLens,
     sigSet,
+    boomerang,
   )
 where
 
@@ -77,8 +78,11 @@ extend new_dur s = s <> Signal (replicate missing_frames (end s))
   where
     missing_frames = new_dur - duration s + 1
 
-sigSet ::  Traversal' a b -> Signal b -> Signal a -> Signal a
-sigSet trav  small = set (sigLens trav) small
+sigReverse :: Signal a -> Signal a
+sigReverse (Signal l) = Signal (reverse l)
+
+sigSet :: Traversal' a b -> Signal b -> Signal a -> Signal a
+sigSet trav = set (sigLens trav)
 
 sigLens :: Traversal' a b -> Traversal' (Signal a) (Signal b)
 sigLens field = traversal f
@@ -128,6 +132,11 @@ signal = chain . const
 
 fn :: (a -> Chain a) -> Chain a
 fn f = chain (\x -> asFn (f x) x)
+
+boomerang :: Chain a -> Chain a
+boomerang (Chain trav f) = Chain trav (boomerang' . f)
+  where
+    boomerang' sig = sig <> sigReverse sig
 
 delay :: (?config :: Config) => Time -> Chain a
 delay t = chain (Signal . replicate (1 + toDur t))
