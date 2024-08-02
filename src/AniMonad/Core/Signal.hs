@@ -19,19 +19,16 @@ module AniMonad.Core.Signal
     innerFn,
     inners,
     fn,
-    asFn,
     sample,
     duration,
     sigLens,
     sigSet,
-    -- boomerang,
   )
 where
 
 import AniMonad.Config
 import Control.Exception (assert)
-import Control.Lens hiding ((|>))
-import Control.Monad (zipWithM)
+import Control.Lens hiding (both, (|>))
 
 type Time = Float
 
@@ -95,12 +92,13 @@ sigLens :: Traversal' a b -> Traversal' (Signal a) (Signal b)
 sigLens field = traversal f
   where
     f bfb sa = ((\sbs -> (\a bs -> a & partsOf field .~ bs) <$> sa <*> sbs) <$>) $ sequenceA <$> traverse bfb (decompose $ toListOf field <$> sa)
-    decompose :: Signal [b] -> [Signal b]
-    decompose sigBs = [(\l -> assert (length l == len) (l !! i)) <$> sigBs | i <- [0 .. (len - 1)]]
-      where
-        len = length (start sigBs)
 
-newtype Chain a = Chain (Signal a -> (Signal a, Int))
+decompose :: Signal [b] -> [Signal b]
+decompose sigBs = [(\l -> assert (length l == len) (l !! i)) <$> sigBs | i <- [0 .. (len - 1)]]
+  where
+    len = length (start sigBs)
+
+newtype Chain a = Chain {func :: Signal a -> (Signal a, Int)}
 
 full :: Signal a -> (Signal a, Int)
 full s = (s, duration s)
@@ -130,17 +128,21 @@ innerFn :: Traversal' a b -> (b -> Chain b) -> Chain a
 innerFn t x = inner t (fn x)
 
 inners :: Traversal' a b -> [Chain b] -> Chain a
-inners trav cbs = inner (partsOf trav) (chain thing)
+inners trav cbs = inner (partsOf trav) (Chain f)
   where
-    thing = zipWithM asFn cbs
+    funcs = map func cbs
+    f s = (sequenceA sigs, maximum durs)
+      where
+        dec = decompose s
+        (sigs, durs) = unzip $ zipWith ($) funcs dec
 
 simul :: [Time -> Chain a] -> Time -> Chain a
 simul l time = keys (map ($ time) l)
 
 keys :: [Chain a] -> Chain a
-keys l = chain thing
+keys = foldr1 both
   where
-    thing initial = foldr applyChain (pure initial) l
+    both (Chain a) (Chain b) = Chain (\s -> b (fst $ a s))
 
 chain :: (a -> Signal a) -> Chain a
 chain f = Chain (full . f . start)
@@ -149,26 +151,17 @@ signal :: Signal a -> Chain a
 signal = chain . const
 
 fn :: (a -> Chain a) -> Chain a
-fn f = chain (\x -> asFn (f x) x)
-
--- boomerang :: Chain a -> Chain a
--- boomerang (Chain trav f) = Chain trav (boomerang' . f)
---   where
---     boomerang' sig = sig <> sigReverse sig
+fn f = Chain (\s -> func (f (start s)) s)
 
 delay :: (?config :: Config) => Time -> Chain a
-delay t = chain (Signal . replicate (1 + toDur t))
+delay t = Chain ((,dur) . extend dur)
+  where
+    dur = toDur t
 
 mapEnd :: (a -> a) -> Chain a
 mapEnd f = chain (pure . f)
 
-applyChain :: Chain a -> Signal a -> Signal a
-applyChain (Chain f) = fst . f
-
-asFn :: Chain a -> a -> Signal a
-asFn c initial = applyChain c (pure initial)
-
 (|>) :: a -> Chain a -> Signal a
-(|>) = flip asFn
+val |> (Chain c) = fst $ c (pure val)
 
 infixl 5 |>

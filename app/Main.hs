@@ -23,7 +23,7 @@ tricky = render anim
         <> simul [key (ix 0 . x) 60, key (ix 1 . x) (-60)] 1
         <> key (ixs [0, 1] . y) 0 1
 
-    colors = simul [key (ix 0 . color) red, key (ix 1 . color) blue] 1
+    colors = simul [key (ix 0 . color) red, key (ix 1 . color) blue] 3
     anim = base |> keys [colors, movement]
 
 simple :: (?config :: Config) => IO ()
