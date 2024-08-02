@@ -9,6 +9,7 @@ module AniMonad.Core.Signal
     delay,
     simul,
     keys,
+    sigReverse,
     Chain (Chain),
     chain,
     signal,
@@ -23,7 +24,7 @@ module AniMonad.Core.Signal
     duration,
     sigLens,
     sigSet,
-    boomerang,
+    -- boomerang,
   )
 where
 
@@ -46,6 +47,12 @@ newtype Signal a = Signal [a] deriving (Show, Eq)
 
 sample :: (?config :: Config) => Time -> (Time -> a) -> Signal a
 sample time f = Signal $ map f [0, frameTime .. time]
+
+split :: Int -> Signal a -> (Signal a, Signal a)
+split count (Signal l) = (Signal s, Signal e)
+  where
+    (s, _) = splitAt (count + 1) l
+    (_, e) = splitAt count l
 
 frames :: Signal a -> [a]
 frames (Signal f) = init f
@@ -93,20 +100,31 @@ sigLens field = traversal f
       where
         len = length (start sigBs)
 
-data Chain a where
-  Chain :: (Traversal' a b) -> (b -> Signal b) -> Chain a
+newtype Chain a = Chain (Signal a -> (Signal a, Int))
+
+full :: Signal a -> (Signal a, Int)
+full s = (s, duration s)
 
 instance Semigroup (Chain a) where
   (<>) :: Chain a -> Chain a -> Chain a
-  c1 <> c2 = chain (\val -> a val <> asFn c2 (end (a val)))
+  (Chain c1) <> (Chain c2) = Chain f
     where
-      a = asFn c1
+      f s = full (begin <> after)
+        where
+          (step1, dur1) = c1 s
+          (begin, rest) = split dur1 step1
+          (after, _) = c2 rest
 
 instance Monoid (Chain a) where
   mempty = mapEnd id
 
 inner :: Traversal' a b -> Chain b -> Chain a
-inner t x = Chain t (asFn x)
+inner t (Chain innerF) = Chain f
+  where
+    f s = (sigSet (partsOf t) (sequenceA subSigs) s, dur)
+      where
+        (subSigs, durs) = unzip $ map innerF (toListOf (sigLens t) s)
+        dur = maximum durs
 
 innerFn :: Traversal' a b -> (b -> Chain b) -> Chain a
 innerFn t x = inner t (fn x)
@@ -125,7 +143,7 @@ keys l = chain thing
     thing initial = foldr applyChain (pure initial) l
 
 chain :: (a -> Signal a) -> Chain a
-chain = Chain id
+chain f = Chain (full . f . start)
 
 signal :: Signal a -> Chain a
 signal = chain . const
@@ -133,10 +151,10 @@ signal = chain . const
 fn :: (a -> Chain a) -> Chain a
 fn f = chain (\x -> asFn (f x) x)
 
-boomerang :: Chain a -> Chain a
-boomerang (Chain trav f) = Chain trav (boomerang' . f)
-  where
-    boomerang' sig = sig <> sigReverse sig
+-- boomerang :: Chain a -> Chain a
+-- boomerang (Chain trav f) = Chain trav (boomerang' . f)
+--   where
+--     boomerang' sig = sig <> sigReverse sig
 
 delay :: (?config :: Config) => Time -> Chain a
 delay t = chain (Signal . replicate (1 + toDur t))
@@ -145,9 +163,7 @@ mapEnd :: (a -> a) -> Chain a
 mapEnd f = chain (pure . f)
 
 applyChain :: Chain a -> Signal a -> Signal a
-applyChain (Chain trav c) s = set (partsOf $ sigLens trav) x s
-  where
-    x = map c $ toListOf trav (start s)
+applyChain (Chain f) = fst . f
 
 asFn :: Chain a -> a -> Signal a
 asFn c initial = applyChain c (pure initial)
