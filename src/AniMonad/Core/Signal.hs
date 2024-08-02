@@ -98,9 +98,13 @@ data Chain a where
 
 instance Semigroup (Chain a) where
   (<>) :: Chain a -> Chain a -> Chain a
-  c1 <> c2 = chain (\val -> a val <> asFn c2 (end (a val)))
+  (Chain travA fA) <> (Chain travB fB) = Chain (multiTrav travA travB) f
     where
-      a = asFn c1
+      f (as, bs) = ((,bs) <$> x) <> ((as,) <$> y)
+        where
+          x = traverse fA as
+          y = traverse fB bs
+
 
 instance Monoid (Chain a) where
   mempty = mapEnd id
@@ -120,9 +124,19 @@ simul :: [Time -> Chain a] -> Time -> Chain a
 simul l time = keys (map ($ time) l)
 
 keys :: [Chain a] -> Chain a
-keys l = chain thing
+keys = foldr1 combine
   where
-    thing initial = foldr applyChain (pure initial) l
+    combine :: Chain a -> Chain a -> Chain a
+    combine (Chain travA fA) (Chain travB fB) = Chain (multiTrav travA travB) f
+      where
+        f (as, bs) = (,) <$> traverse fA as <*> traverse fB bs
+
+multiTrav :: Traversal' s a -> Traversal' s b -> Lens' s ([a], [b])
+multiTrav a b bfb s = (\(ass, bss) -> (set (partsOf a) ass . set (partsOf b) bss) s) <$> x
+  where
+    as = toListOf a s
+    bs = toListOf b s
+    x = bfb (as, bs)
 
 chain :: (a -> Signal a) -> Chain a
 chain = Chain id
