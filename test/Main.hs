@@ -25,7 +25,7 @@ testSigLens = same anim (get sig_lens (set sig_lens anim p))
 testMapEnd :: (?config :: Config) => Test
 testMapEnd = test [end (0 |> anim1) ~?= 7, end (1 |> anim2) ~?= 14]
   where
-    anim1 :: Chain Float = ky 1.0 1 <> mapEnd (const 7)
+    anim1 :: Action Float = ky 1.0 1 <> mapEnd (const 7)
     anim2 = anim1 <> mapEnd (* 2)
 
 testTimings :: (?config :: Config) => Test
@@ -65,8 +65,8 @@ testInstant = same (zero |> ky 1 1) (0 |> ky 0 0 <> ky 1 1)
 testDelay :: (?config :: Config) => Test
 testDelay = same (zero |> delay (2 * frameTime)) (0 |> delay frameTime <> delay frameTime)
 
-testInners :: (?config :: Config) => Test
-testInners = same ([one, 2] |> ky [3, 4] 1) ([1, 2] |> inners traverse [ky 3 1, ky 4 1])
+-- testInners :: (?config :: Config) => Test
+-- testInners = same ([one, 2] |> ky [3, 4] 1) ([1, 2] |> inners traverse [ky 3 1, ky 4 1])
 
 testKeyFn :: (?config :: Config) => Test
 testKeyFn = same (one |> ky 2 1) (one |> kyFn (* 2) 1)
@@ -83,7 +83,7 @@ $( testAll
        'testInstant,
        'testManySignal,
        'testMapEnd,
-       'testInners,
+       -- 'testInners,
        'testKeyFn,
        'testBoomerang
      ]

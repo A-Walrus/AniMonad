@@ -9,16 +9,16 @@ module AniMonad.Core.Signal
     delay,
     simul,
     keys,
-    Chain (Chain),
-    chain,
+    Action (Action),
+    -- chain,
     signal,
     (|>),
     mapEnd,
     inner,
     innerFn,
-    inners,
+    -- inners,
     fn,
-    asFn,
+    -- asFn,
     sample,
     duration,
     sigLens,
@@ -29,8 +29,9 @@ where
 
 import AniMonad.Config
 import Control.Exception (assert)
-import Control.Lens hiding ((|>))
-import Control.Monad (zipWithM)
+import Control.Lens hiding (both, (|>))
+
+-- import Control.Monad (zipWithM)
 
 type Time = Float
 
@@ -93,66 +94,57 @@ sigLens field = traversal f
       where
         len = length (start sigBs)
 
-data Chain a where
-  Chain :: (Traversal' a b) -> (b -> Signal b) -> Chain a
+newtype Action a = Action {action :: a -> Signal (a -> a)}
 
-instance Semigroup (Chain a) where
-  (<>) :: Chain a -> Chain a -> Chain a
-  c1 <> c2 = chain (\val -> a val <> asFn c2 (end (a val)))
+instance Semigroup (Action a) where
+  (<>) :: Action a -> Action a -> Action a
+  (Action a) <> (Action b) = Action f
     where
-      a = asFn c1
+      f val = a val <> b (end (a val) val)
 
-instance Monoid (Chain a) where
+instance Monoid (Action a) where
   mempty = mapEnd id
 
-inner :: Traversal' a b -> Chain b -> Chain a
-inner t x = Chain t (asFn x)
+inner :: Traversal' a b -> Action b -> Action a
+inner t (Action f) = Action (\val -> thing <$> traverse f (toListOf t val))
+  where
+    thing funcs val = set (partsOf t) (zipWith ($) funcs (toListOf t val)) val
 
-innerFn :: Traversal' a b -> (b -> Chain b) -> Chain a
+innerFn :: Traversal' a b -> (b -> Action b) -> Action a
 innerFn t x = inner t (fn x)
 
-inners :: Traversal' a b -> [Chain b] -> Chain a
-inners trav cbs = inner (partsOf trav) (chain thing)
-  where
-    thing = zipWithM asFn cbs
+-- inners :: Traversal' a b -> [Action b] -> Action a
+-- inners trav cbs = inner (partsOf trav) (chain thing)
+--   where
+--     thing = zipWithM asFn cbs
 
-simul :: [Time -> Chain a] -> Time -> Chain a
+simul :: [Time -> Action a] -> Time -> Action a
 simul l time = keys (map ($ time) l)
 
-keys :: [Chain a] -> Chain a
-keys l = chain thing
+keys :: [Action a] -> Action a
+keys = foldr1 both
   where
-    thing initial = foldr applyChain (pure initial) l
+    both (Action a) (Action b) = Action (\val -> (.) <$> b val <*> a val)
 
-chain :: (a -> Signal a) -> Chain a
-chain = Chain id
+signal :: Signal a -> Action a
+signal sig = Action (const $ const <$> sig)
 
-signal :: Signal a -> Chain a
-signal = chain . const
+fn :: (a -> Action a) -> Action a
+fn f = Action (\x -> action (f x) x)
 
-fn :: (a -> Chain a) -> Chain a
-fn f = chain (\x -> asFn (f x) x)
+boomerang :: Action a -> Action a
+boomerang (Action f) = Action (\s -> f s <> sigReverse (f s))
 
-boomerang :: Chain a -> Chain a
-boomerang (Chain trav f) = Chain trav (boomerang' . f)
-  where
-    boomerang' sig = sig <> sigReverse sig
+delay :: (?config :: Config) => Time -> Action a
+delay t = Action (const (sample t (const id)))
 
-delay :: (?config :: Config) => Time -> Chain a
-delay t = chain (Signal . replicate (1 + toDur t))
+mapEnd :: (a -> a) -> Action a
+mapEnd f = Action ((const . pure) f)
 
-mapEnd :: (a -> a) -> Chain a
-mapEnd f = chain (pure . f)
+applyAction :: Action a -> Signal a -> Signal a
+applyAction (Action f) sig = f (start sig) <*> sig
 
-applyChain :: Chain a -> Signal a -> Signal a
-applyChain (Chain trav c) s = set (partsOf $ sigLens trav) x s
-  where
-    x = map c $ toListOf trav (start s)
-
-asFn :: Chain a -> a -> Signal a
-asFn c initial = applyChain c (pure initial)
-
-(|>) :: a -> Chain a -> Signal a
-(|>) = flip asFn
+(|>) :: a -> Action a -> Signal a
+val |> action = applyAction action (pure val)
 
 infixl 5 |>

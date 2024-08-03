@@ -18,13 +18,16 @@ tricky :: (?config :: Config) => IO ()
 tricky = render anim
   where
     base = row 20 [Rect 100 100 blue 10, Rect 100 100 red 10]
-    movement =
-      simul [key (ix 0 . y) 60, key (ix 1 . y) (-60)] 1
-        <> simul [key (ix 0 . x) 60, key (ix 1 . x) (-60)] 1
-        <> key (ixs [0, 1] . y) 0 1
+    -- movement =
+    --   simul [key (ix 0 . y) 60, key (ix 1 . y) (-60)] 1
+    --     <> simul [key (ix 0 . x) 60, key (ix 1 . x) (-60)] 1
+    --     <> key (ixs [0, 1] . y) 0 1
+    movement = simul [key (ix 0 . y) 100, key (ix 0 . x) 200] 1 <> key (ix 0 . y) 0 1
 
-    colors = simul [key (ix 0 . color) red, key (ix 1 . color) blue] 1
-    anim = base |> keys [colors, movement]
+    -- colors = simul [key (ix 0 . color) red, key (ix 1 . color) blue] 1
+    anim = base |> movement
+
+    -- anim = Circle 100 red |> key radius 50 1 <> key radius 200 1
 
 simple :: (?config :: Config) => IO ()
 simple = render anim
@@ -62,34 +65,34 @@ disabledColor = sRGB24read "#424949"
 
 bgColor = sRGB24read "#66646C"
 
-sort :: (?config :: Config) => IO ()
-sort = render anim
-  where
-    background = Rect 1024 1024 bgColor 0
-    values = [15, 62, 30, 69, 58, 44, 81] :: [Int]
-    len = length values
-    try_swap a b t =
-      key (ixs [a, b] . y) 50 t
-        <> innerFn
-          (partsOf (ixs [a, b]))
-          ( \[n1, n2] ->
-              if (n1 ^. _2 . str) > (n2 ^. _2 . str)
-                then
-                  innerFn (partsOf (traverse . x)) (\[a1, a2] -> ky [a2, a1] t)
-                else
-                  mempty
-          )
-        <> key (ixs [a, b] . y) 0 t
-        <> mapEnd (sortOn (view x))
-    times = 0.5 : map (max 0.2 . (* 0.9)) times
-    sort = fold (zipWith sortPass [(len - 2), (len - 3) .. (-1)] times)
-    sortPass i t = foldMap (\b -> try_swap b (b + 1) t) [0 .. i] <> key (ix (i + 1) . _1 . color) disabledColor t
-    base = row 20 [(Rect 120 120 itemColor 24, Text val 40 white) | val <- values]
-    anim =
-      (,) background
-        <$> base
-          |> sort
-          <> delay 0.2
-          <> key (traverse . _1 . color) itemColor 0.6
-          <> inners (traverse . y) [delay (i * 0.05) <> ky (-90) 0.2 <> ky 0 0.2 | i <- [0 ..]]
-          <> delay 1
+-- sort :: (?config :: Config) => IO ()
+-- sort = render anim
+--   where
+--     background = Rect 1024 1024 bgColor 0
+--     values = [15, 62, 30, 69, 58, 44, 81] :: [Int]
+--     len = length values
+--     try_swap a b t =
+--       key (ixs [a, b] . y) 50 t
+--         <> innerFn
+--           (partsOf (ixs [a, b]))
+--           ( \[n1, n2] ->
+--               if (n1 ^. _2 . str) > (n2 ^. _2 . str)
+--                 then
+--                   innerFn (partsOf (traverse . x)) (\[a1, a2] -> ky [a2, a1] t)
+--                 else
+--                   mempty
+--           )
+--         <> key (ixs [a, b] . y) 0 t
+--         <> mapEnd (sortOn (view x))
+--     times = 0.5 : map (max 0.2 . (* 0.9)) times
+--     sort = fold (zipWith sortPass [(len - 2), (len - 3) .. (-1)] times)
+--     sortPass i t = foldMap (\b -> try_swap b (b + 1) t) [0 .. i] <> key (ix (i + 1) . _1 . color) disabledColor t
+--     base = row 20 [(Rect 120 120 itemColor 24, Text val 40 white) | val <- values]
+--     anim =
+--       (,) background
+--         <$> base
+--           |> sort
+--           <> delay 0.2
+--           <> key (traverse . _1 . color) itemColor 0.6
+--           <> inners (traverse . y) [delay (i * 0.05) <> ky (-90) 0.2 <> ky 0 0.2 | i <- [0 ..]]
+--           <> delay 1
