@@ -3,6 +3,7 @@ module AniMonad.Core.Signal
     Signal (Signal),
     frameTime,
     frames,
+    toDur,
     end,
     start,
     extend,
@@ -15,7 +16,7 @@ module AniMonad.Core.Signal
     mapEnd,
     inner,
     innerFn,
-    -- inners,
+    inners,
     fn,
     sample,
     duration,
@@ -28,8 +29,7 @@ where
 import AniMonad.Config
 import Control.Exception (assert)
 import Control.Lens hiding (both, (|>))
-
--- import Control.Monad (zipWithM)
+import Control.Monad (zipWithM)
 
 type Time = Float
 
@@ -114,10 +114,10 @@ inner t (Action f) = Action (\val -> thing <$> traverse f (toListOf t val))
 innerFn :: Traversal' a b -> (b -> Action b) -> Action a
 innerFn t x = inner t (fn x)
 
--- inners :: Traversal' a b -> [Action b] -> Action a
--- inners trav cbs = inner (partsOf trav) (chain thing)
---   where
---     thing = zipWithM asFn cbs
+inners :: Traversal' a b -> [Action b] -> Action a
+inners trav cbs = inner (partsOf trav) (Action thing)
+  where
+    thing = (zipWith ($) <$>) . zipWithM action cbs
 
 simul :: [Time -> Action a] -> Time -> Action a
 simul l time = keys (map ($ time) l)
