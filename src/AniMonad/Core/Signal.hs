@@ -10,7 +10,6 @@ module AniMonad.Core.Signal
     simul,
     keys,
     Action (Action),
-    -- chain,
     signal,
     (|>),
     mapEnd,
@@ -18,7 +17,6 @@ module AniMonad.Core.Signal
     innerFn,
     -- inners,
     fn,
-    -- asFn,
     sample,
     duration,
     sigLens,
@@ -100,7 +98,10 @@ instance Semigroup (Action a) where
   (<>) :: Action a -> Action a -> Action a
   (Action a) <> (Action b) = Action f
     where
-      f val = a val <> b (end (a val) val)
+      f val = a val <> ((. endFn) <$> b endVal)
+        where
+          endFn = end (a val)
+          endVal = endFn val
 
 instance Monoid (Action a) where
   mempty = mapEnd id
@@ -139,7 +140,8 @@ delay :: (?config :: Config) => Time -> Action a
 delay t = Action (const (sample t (const id)))
 
 mapEnd :: (a -> a) -> Action a
-mapEnd f = Action ((const . pure) f)
+-- mapEnd f = Action ((const . pure) f)
+mapEnd f = Action (const $ pure f)
 
 applyAction :: Action a -> Signal a -> Signal a
 applyAction (Action f) sig = f (start sig) <*> sig

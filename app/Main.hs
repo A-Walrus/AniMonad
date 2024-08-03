@@ -18,16 +18,13 @@ tricky :: (?config :: Config) => IO ()
 tricky = render anim
   where
     base = row 20 [Rect 100 100 blue 10, Rect 100 100 red 10]
-    -- movement =
-    --   simul [key (ix 0 . y) 60, key (ix 1 . y) (-60)] 1
-    --     <> simul [key (ix 0 . x) 60, key (ix 1 . x) (-60)] 1
-    --     <> key (ixs [0, 1] . y) 0 1
-    movement = simul [key (ix 0 . y) 100, key (ix 0 . x) 200] 1 <> key (ix 0 . y) 0 1
+    movement =
+      simul [key (ix 0 . y) 60, key (ix 1 . y) (-60)] 1
+        <> simul [key (ix 0 . x) 60, key (ix 1 . x) (-60)] 1
+        <> key (ixs [0, 1] . y) 0 1
 
-    -- colors = simul [key (ix 0 . color) red, key (ix 1 . color) blue] 1
-    anim = base |> movement
-
-    -- anim = Circle 100 red |> key radius 50 1 <> key radius 200 1
+    colors = simul [key (ix 0 . color) red, key (ix 1 . color) blue] 3
+    anim = base |> keys [movement, colors]
 
 simple :: (?config :: Config) => IO ()
 simple = render anim
