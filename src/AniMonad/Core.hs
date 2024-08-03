@@ -4,9 +4,11 @@ module AniMonad.Core
     module AniMonad.Core.Signal,
     module AniMonad.Core.Keys,
     module Control.Lens,
+    module Ease
   )
 where
 
+import Ease
 import AniMonad.Core.Keys
 import AniMonad.Core.LensExt
 import AniMonad.Core.Lerp

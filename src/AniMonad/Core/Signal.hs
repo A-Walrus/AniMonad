@@ -78,7 +78,10 @@ start :: Signal a -> a
 start (Signal l) = head l
 
 extend :: Int -> Signal a -> Signal a
-extend new_dur s = s <> Signal (replicate missing_frames (end s))
+extend new_dur s =
+  if duration s < new_dur
+    then s <> Signal (replicate missing_frames (end s))
+    else s
   where
     missing_frames = new_dur - duration s + 1
 

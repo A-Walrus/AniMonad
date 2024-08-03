@@ -32,10 +32,11 @@ testTimings :: (?config :: Config) => Test
 testTimings =
   test
     [ end l ~=? 1,
-      end (extend 100 l) ~=? 1
+      end (extend 100 l) ~=? 1,
+      end (extend 1 l) ~=? 1
     ]
   where
-    l = 0 |> ky 1 1 :: Signal Float
+    l = 0 |> ky 1 2 :: Signal Float
 
 data Rectish = Rectish {_w, _h :: Float, _num :: Int}
 
