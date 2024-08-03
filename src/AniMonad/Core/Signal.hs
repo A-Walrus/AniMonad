@@ -117,7 +117,7 @@ instance Semigroup (Chain a) where
           (after, _) = c2 rest
 
 instance Monoid (Chain a) where
-  mempty = mapEnd id
+  mempty = Chain (,0)
 
 inner :: Traversal' a b -> Chain b -> Chain a
 inner t (Chain innerF) = Chain f
