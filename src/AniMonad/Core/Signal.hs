@@ -140,7 +140,6 @@ delay :: (?config :: Config) => Time -> Action a
 delay t = Action (const (sample t (const id)))
 
 mapEnd :: (a -> a) -> Action a
--- mapEnd f = Action ((const . pure) f)
 mapEnd f = Action (const $ pure f)
 
 applyAction :: Action a -> Signal a -> Signal a
