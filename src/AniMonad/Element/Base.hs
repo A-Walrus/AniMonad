@@ -12,7 +12,7 @@ module AniMonad.Element.Base
     boxWidth,
     boxHeight,
     Transformed,
-    Element (box, draw, realize),
+    Element (box, draw),
     showColor,
     val,
     combine,
@@ -27,9 +27,15 @@ module AniMonad.Element.Base
     rotationR,
     rotation,
     showT,
+    overlay,
+    Overlay (Overlay),
+    ComplexElem (realize),
+    thing,
+    makeOverlay,
   )
 where
 
+import AniMonad.Core.Signal (Action (Action))
 import Control.Lens (Lens', makeLensesFor)
 import Control.Lens.Combinators (lens)
 import Data.Colour (Colour)
@@ -55,10 +61,6 @@ showColor = pack . sRGB24show
 class Element a where
   draw :: a -> Svg ()
   box :: a -> BoundingBox
-  realize :: a -> SomeElem
-  realize = undefined
-  draw = draw . realize
-  box = box . realize
 
 data BoundingBox = BoundingBox Vec2 Vec2 deriving (Show)
 
@@ -201,3 +203,29 @@ instance Element (Transformed a) where
   box (Transformed txform element) = foldl grow (point (head newCorners)) newCorners
     where
       newCorners = map (project txform) $ corners $ box element
+
+-- Complex Element
+
+class (Element b) => ComplexElem a b | a -> b where
+  realize :: a -> b
+
+data Overlay a b = (ComplexElem a b) => Overlay {_inner :: a, _fn :: b -> b}
+
+thing :: Lens' (Overlay a b) a
+thing = lens _inner s
+  where
+    s x y = x {_inner = y}
+
+overlay :: (ComplexElem a b) => a -> Overlay a b
+overlay x = Overlay x id
+
+instance Element (Overlay a b) where
+  draw (Overlay a f) = draw . f $ realize a
+  box (Overlay a f) = box . f $ realize a
+
+makeOverlay :: Action b -> Action (Overlay a b)
+makeOverlay (Action a) = Action f
+  where
+    f (Overlay val _) = (\f (Overlay a b) -> Overlay a (b . f)) <$> x
+      where
+        x = a (realize val)
