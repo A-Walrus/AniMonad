@@ -17,6 +17,7 @@ module AniMonad.Element.Base
     val,
     combine,
     transform,
+    transformed,
     Transform,
     project,
     at,
@@ -137,6 +138,9 @@ project txform v = dehomogenize (asMat txform !* homogenize v)
 
 at :: (Element a) => Vec2 -> a -> Transformed a
 at pos = Transformed (identity {_position = pos})
+
+transformed :: (Element a) => a -> Transformed a
+transformed = Transformed identity
 
 class HasTranslation a where
   translation :: Lens' a Vec2
