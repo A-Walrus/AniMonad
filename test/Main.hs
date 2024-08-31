@@ -91,7 +91,7 @@ $( testAll
 
 main :: IO ()
 main =
-  let ?config = Config 1024 1024 60
+  let ?config = Config 1024 1024 60 black
    in do
         result <- runTestTT allTests
         if failures result + errors result == 0 then Exit.exitSuccess else Exit.exitFailure

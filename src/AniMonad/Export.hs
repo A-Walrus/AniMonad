@@ -10,10 +10,11 @@ import System.Process
 svgDoc :: (?config :: Config) => Svg () -> Svg ()
 svgDoc content = do
   doctype_
-  with (svg11_ content) [version_ "1.1", width_ w, height_ h, viewBox_ $ nw2 <> " " <> nh2 <> " " <> w <> " " <> h]
+  with (svg11_ (rect_ [width_ w, height_ h, fill_ fill, x_ nw2, y_ nh2] <> content)) [version_ "1.1", width_ w, height_ h, viewBox_ $ nw2 <> " " <> nh2 <> " " <> w <> " " <> h]
   where
     height = docHeight ?config
     width = docWidth ?config
+    fill = showColor $ backgroundColor ?config
     h = showT height
     w = showT width
     (nh2, nw2) = (showT (-(height `div` 2)), showT (-(width `div` 2)))

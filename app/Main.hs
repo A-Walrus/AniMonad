@@ -12,7 +12,7 @@ import Data.List (sortOn)
 import Text.Printf
 
 main :: IO ()
-main = let ?config = Config 1024 1024 60 in tricky
+main = let ?config = Config 1024 1024 60 black in tricky
 
 tricky :: (?config :: Config) => IO ()
 tricky = render anim
@@ -56,16 +56,12 @@ layout = render anim
           <> inner (ix 3 . (as @Circle) . radius) (ky 25 1 <> ky 100 1)
           <> inner (ix 1 . (as @(Transformed Rect))) (key color tomato 1 <> key rotation 90 1)
 
-itemColor = sRGB24read "#95a5a6"
-
-disabledColor = sRGB24read "#424949"
-
-bgColor = sRGB24read "#66646C"
-
 sort :: (?config :: Config) => IO ()
-sort = render anim
+sort = let ?config = ?config {backgroundColor = bgColor} in render anim
   where
-    background = Rect 1024 1024 bgColor 0
+    itemColor = sRGB24read "#95a5a6"
+    disabledColor = sRGB24read "#424949"
+    bgColor = sRGB24read "#66646C"
     values = [15, 62, 30, 69, 58, 44, 81] :: [Int]
     len = length values
     try_swap a b t =
@@ -86,10 +82,9 @@ sort = render anim
     sortPass i t = foldMap (\b -> try_swap b (b + 1) t) [0 .. i] <> key (ix (i + 1) . _1 . color) disabledColor t
     base = row 20 [(Rect 120 120 itemColor 24, Text val 40 white) | val <- values]
     anim =
-      (,) background
-        <$> base
-          |> sort
-          <> delay 0.2
-          <> key (traverse . _1 . color) itemColor 0.6
-          <> inners (traverse . y) [delay (i * 0.05) <> ky (-90) 0.2 <> ky 0 0.2 | i <- [0 ..]]
-          <> delay 1
+      base
+        |> sort
+        <> delay 0.2
+        <> key (traverse . _1 . color) itemColor 0.6
+        <> inners (traverse . y) [delay (i * 0.05) <> ky (-90) 0.2 <> ky 0 0.2 | i <- [0 ..]]
+        <> delay 1
