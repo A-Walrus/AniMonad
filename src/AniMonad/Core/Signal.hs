@@ -11,7 +11,7 @@ module AniMonad.Core.Signal
     simul,
     keys,
     Action (Action),
-    signal,
+    constSig,
     (|>),
     mapEnd,
     inner,
@@ -127,8 +127,8 @@ keys = foldr1 both
   where
     both (Action a) (Action b) = Action (\val -> (.) <$> b val <*> a val)
 
-signal :: Signal a -> Action a
-signal sig = Action (const $ const <$> sig)
+constSig :: Signal a -> Action a
+constSig sig = Action (const $ const <$> sig)
 
 fn :: (a -> Action a) -> Action a
 fn f = Action (\x -> action (f x) x)

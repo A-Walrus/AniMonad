@@ -2,13 +2,13 @@ module AniMonad.Core.Keys where
 
 import AniMonad.Config
 import AniMonad.Core.Lerp
-import AniMonad.Core.Signal (Action, Time, fn, inner, innerFn, mapEnd, sample, signal)
+import AniMonad.Core.Signal (Action, Time, fn, inner, innerFn, mapEnd, sample, constSig)
 import Control.Lens (Traversal')
 import Ease (Ease, cubicInOut)
 
 key' :: (?config :: Config, Lerp b) => Traversal' a b -> b -> Ease Float -> Time -> Action a
 key' trav end _ 0 = inner trav (mapEnd (const end))
-key' trav end easing time = inner trav (fn (signal . new_values))
+key' trav end easing time = inner trav (fn (constSig . new_values))
   where
     new_values start = sample time (lerp start end . easing . (/ time))
 

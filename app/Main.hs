@@ -33,7 +33,7 @@ simple = render anim
       Circle 100 white
         |> key color blue 2
         <> keyFn radius (* 2) 0.5
-        <> inner radius (signal ((* 100) . (+ 1) <$> sample (2 * pi) cos))
+        <> inner radius (constSig ((* 100) . (+ 1) <$> sample (2 * pi) cos))
         <> delay 1
 
 geometry :: (?config :: Config) => IO ()
