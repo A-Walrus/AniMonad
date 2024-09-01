@@ -26,7 +26,7 @@ instance ComplexElem Lst [Transformed (Rect, Text Int)] where
   realize (Lst nums) = row 20 $ map (\n -> (Rect 100 100 white 10, Text n 30 black)) nums
 
 insert :: (?config :: Config) => Int -> Action (Overlay Lst [Transformed (Rect, Text Int)])
-insert val= makeOverlay (keyFn (traverse . x) (+ (-60)) 1) <> mapEnd (\(Overlay (Lst a) _) -> Overlay (Lst (a ++ [val])) id)
+insert val = makeOverlay (keyFn (traverse . x) (+ (-60)) 1) <> mapEnd (\(Overlay (Lst a) _) -> Overlay (Lst (a ++ [val])) id)
 
 -- tricky :: (?config :: Config) => IO ()
 -- tricky = render anim
