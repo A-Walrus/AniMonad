@@ -29,19 +29,23 @@ module AniMonad.Element.Base
     showT,
     overlay,
     Overlay (Overlay),
-    ComplexElem (realize),
+    ComplexElem (realize, Elem),
     thing,
-    makeOverlay,
+    over,
+    under,
+    under',
+    clearOver,
   )
 where
 
-import AniMonad.Core.Signal (Action (Action))
+import AniMonad.Core.Signal (Action (Action), inner, mapEnd)
 import Control.Lens (Lens', makeLensesFor)
 import Control.Lens.Combinators (lens)
 import Data.Colour (Colour)
 import Data.Colour.Names
 import Data.Colour.SRGB (sRGB24read, sRGB24show)
 import Data.Data (Typeable, cast)
+import Data.Kind (Type)
 import Data.List (intercalate)
 import Data.Text (Text, pack)
 import Linear (V2 (V2), V3 (V3), (!*!))
@@ -206,26 +210,36 @@ instance Element (Transformed a) where
 
 -- Complex Element
 
-class (Element b) => ComplexElem a b | a -> b where
-  realize :: a -> b
+class (Element (Elem a)) => ComplexElem a where
+  type Elem a :: Type
+  realize :: a -> Elem a
 
-data Overlay a b = (ComplexElem a b) => Overlay {_inner :: a, _fn :: b -> b}
+data Overlay a = (ComplexElem a) => Overlay {_inner :: a, _fn :: Elem a -> Elem a}
 
-thing :: Lens' (Overlay a b) a
+thing :: Lens' (Overlay a) a
 thing = lens _inner s
   where
     s x y = x {_inner = y}
 
-overlay :: (ComplexElem a b) => a -> Overlay a b
+overlay :: (ComplexElem a) => a -> Overlay a
 overlay x = Overlay x id
 
-instance Element (Overlay a b) where
+instance Element (Overlay a) where
   draw (Overlay a f) = draw . f $ realize a
   box (Overlay a f) = box . f $ realize a
 
-makeOverlay :: Action b -> Action (Overlay a b)
-makeOverlay (Action a) = Action f
+over :: Action (Elem a) -> Action (Overlay a)
+over (Action a) = Action f
   where
     f (Overlay val _) = (\f (Overlay a b) -> Overlay a (b . f)) <$> x
       where
         x = a (realize val)
+
+under' :: Action a -> Action (Overlay a)
+under' = inner thing
+
+clearOver :: Action (Overlay a)
+clearOver = mapEnd (\(Overlay a _) -> Overlay a id)
+
+under :: Action a -> Action (Overlay a)
+under a = under' a <> clearOver

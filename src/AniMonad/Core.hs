@@ -8,9 +8,9 @@ module AniMonad.Core
   )
 where
 
-import Ease
 import AniMonad.Core.Keys
 import AniMonad.Core.LensExt
 import AniMonad.Core.Lerp
 import AniMonad.Core.Signal
-import Control.Lens hiding (at, simple, transform, (|>)) -- FIXME
+import Control.Lens hiding (at, over, simple, transform, under, (|>)) -- FIXME
+import Ease
