@@ -1,4 +1,4 @@
 module AniMonad.Config where
-import AniMonad.Element.Base (Color)
+import Data.Colour (Colour)
 
-data Config = Config {docWidth :: Int, docHeight :: Int, fps :: Int, backgroundColor :: Color}
+data Config = Config {docWidth :: Int, docHeight :: Int, fps :: Int, backgroundColor :: Colour Float}

@@ -33,6 +33,7 @@ library
         MonoLocalBinds
         FunctionalDependencies
         DuplicateRecordFields
+        TypeFamilies
     ghc-options:      -Wall
     build-depends:
         base ^>=4.17.2.1,

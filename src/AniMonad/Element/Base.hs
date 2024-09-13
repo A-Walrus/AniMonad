@@ -12,7 +12,7 @@ module AniMonad.Element.Base
     boxWidth,
     boxHeight,
     Transformed,
-    Element (box, draw, realize),
+    Element (box, draw),
     showColor,
     val,
     combine,
@@ -27,15 +27,25 @@ module AniMonad.Element.Base
     rotationR,
     rotation,
     showT,
+    overlay,
+    Overlay (Overlay),
+    ComplexElem (realize, Elem),
+    thing,
+    over,
+    under,
+    under',
+    clearOver,
   )
 where
 
+import AniMonad.Core.Signal (Action (Action), inner, mapEnd)
 import Control.Lens (Lens', makeLensesFor)
 import Control.Lens.Combinators (lens)
 import Data.Colour (Colour)
 import Data.Colour.Names
 import Data.Colour.SRGB (sRGB24read, sRGB24show)
 import Data.Data (Typeable, cast)
+import Data.Kind (Type)
 import Data.List (intercalate)
 import Data.Text (Text, pack)
 import Linear (V2 (V2), V3 (V3), (!*!))
@@ -55,10 +65,6 @@ showColor = pack . sRGB24show
 class Element a where
   draw :: a -> Svg ()
   box :: a -> BoundingBox
-  realize :: a -> SomeElem
-  realize = undefined
-  draw = draw . realize
-  box = box . realize
 
 data BoundingBox = BoundingBox Vec2 Vec2 deriving (Show)
 
@@ -201,3 +207,39 @@ instance Element (Transformed a) where
   box (Transformed txform element) = foldl grow (point (head newCorners)) newCorners
     where
       newCorners = map (project txform) $ corners $ box element
+
+-- Complex Element
+
+class (Element (Elem a)) => ComplexElem a where
+  type Elem a :: Type
+  realize :: a -> Elem a
+
+data Overlay a = (ComplexElem a) => Overlay {_inner :: a, _fn :: Elem a -> Elem a}
+
+thing :: Lens' (Overlay a) a
+thing = lens _inner s
+  where
+    s x y = x {_inner = y}
+
+overlay :: (ComplexElem a) => a -> Overlay a
+overlay x = Overlay x id
+
+instance Element (Overlay a) where
+  draw (Overlay a f) = draw . f $ realize a
+  box (Overlay a f) = box . f $ realize a
+
+over :: Action (Elem a) -> Action (Overlay a)
+over (Action a) = Action f
+  where
+    f (Overlay val _) = (\f (Overlay a b) -> Overlay a (b . f)) <$> x
+      where
+        x = a (realize val)
+
+under' :: Action a -> Action (Overlay a)
+under' = inner thing
+
+clearOver :: Action (Overlay a)
+clearOver = mapEnd (\(Overlay a _) -> Overlay a id)
+
+under :: Action a -> Action (Overlay a)
+under a = under' a <> clearOver

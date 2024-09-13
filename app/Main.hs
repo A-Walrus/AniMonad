@@ -1,5 +1,5 @@
 {-# LANGUAGE ImplicitParams #-}
-{-# LANGUAGE TypeApplications #-}
+{-# LANGUAGE TypeFamilies #-}
 {-# OPTIONS_GHC -Wno-incomplete-uni-patterns #-}
 {-# OPTIONS_GHC -Wno-missing-signatures #-}
 {-# OPTIONS_GHC -Wno-name-shadowing #-}
@@ -7,12 +7,27 @@
 module Main where
 
 import AniMonad
+
 import Data.Foldable (fold)
 import Data.List (sortOn)
 import Text.Printf
 
 main :: IO ()
-main = let ?config = Config 1024 1024 60 black in tricky
+main = let ?config = Config 1024 1024 60 black in comp
+
+comp :: (?config :: Config) => IO ()
+comp = render anim
+  where
+    anim = overlay (Lst [1, 2, 3, 4]) |> insert 5 <> insert 6 <> delay 1
+
+newtype Lst = Lst [Int]
+
+instance ComplexElem Lst where
+  type Elem Lst = [Transformed (Rect, Text Int)]
+  realize (Lst nums) = row 20 $ map (\n -> (Rect 100 100 white 10, Text n 30 black)) nums
+
+insert :: (?config :: Config) => Int -> Action (Overlay Lst)
+insert val = over (keyFn (traverse . x) (+ (-60)) 1) <> under (mapEnd (\(Lst a) -> Lst (a ++ [val])))
 
 tricky :: (?config :: Config) => IO ()
 tricky = render anim
